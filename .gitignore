@@ -1,0 +1,17 @@
+# Ignore everything
+*
+
+# Whitelist
+!.gitignore
+!ast.ml
+!compil.ml
+!eval.ml
+!main.ml
+!Makefile
+!misc.ml
+!print.ml
+!testLex.ml
+!tpLex.mll
+!tpParse.mly
+!test/*
+!test
