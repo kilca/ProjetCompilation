@@ -9,11 +9,11 @@ open Ast
 %token LPAREN RPAREN SEMICOLON
 %token ASSIGN
 %token OBJECT
-%token DEF SUPERCLASS
+%token DEF
 
 
 
-%token IF THEN ELSE BEGIN END
+%token IF THEN ELSE
 
 %token CLASS SUPER EXTENDS IS
 %token COMMA LACCO RACCO
@@ -21,6 +21,7 @@ open Ast
 %token DOT
 %token DEFTYPE
 %token DOUBLEPOINT
+%token NEW
 /* utilise pour donner une precedence maximale au - unaire
 * L'analyseur lexical ne renvoie jamais ce token !
 */
@@ -33,9 +34,13 @@ open Ast
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
 
-%type <expType> expr bexpr
+%type <classObjDecl> classeobj 
+%type <expType> expr bexpr declaration_init
 %type <decl> declaration
+%type <decl list> params
 %type <expType list> exprList
+%type <classDecl> class_declaration
+%type <objetDecl> objet_declaration
 
 %start<Ast.progType> prog
 %%
@@ -59,8 +64,9 @@ declaration :
   { { lhs = x;typ=ty;isVar=true; rhs = e; } }
 
 exprList:
-  e= expr {e}
-  | expr COMMA exprList {...}
+  e= expr {[e]}
+  | e=expr COMMA s=exprList {s::e}
+  |{[]}
 
 expr:
     x = ID                        { Id x }
@@ -87,24 +93,24 @@ fun_bloc:(*bloc de fonction*)
   | IS LACCO e = expr RACCO EOF {[],e}
   | ASSIGN e=expr {[],e}
 
-class_declaration
+class_declaration :
     CLASS n=ID p = delimited (LPAREN,params,RPAREN) c=class_bloc 
     {{nom=n;para=p;ext=None;sup=None;cbl=c}}
-    | CLASS n=ID p = delimited (LPAREN,params,RPAREN) EXTENDS c=ID class_bloc 
-    {{nom=n;para=p;ext=None;sup=None;cbl=c}}
-    | CLASS n=ID p = delimited (LPAREN,params,RPAREN) SUPER c=ID class_bloc 
-    {{nom=n;para=p;ext=None;sup=None;cbl=c}}
-    | CLASS n=ID p = delimited (LPAREN,params,RPAREN)  EXTENDS c=ID SUPER c=ID class_bloc 
-    {{nom=n;para=p;ext=None;sup=None;cbl=c}}
+    | CLASS n=ID p = delimited (LPAREN,params,RPAREN) EXTENDS ex=ID class_bloc 
+    {{nom=n;para=p;ext=ex;sup=None;cbl=c}}
+    | CLASS n=ID p = delimited (LPAREN,params,RPAREN) SUPER s=ID class_bloc 
+    {{nom=n;para=p;ext=None;sup=s;cbl=c}}
+    | CLASS n=ID p = delimited (LPAREN,params,RPAREN)  EXTENDS ex=ID SUPER s=ID class_bloc 
+    {{nom=n;para=p;ext=ex;sup=s;cbl=c}}
 
 
 class_bloc: (*bloc de la classe *)
-  IS LACCO ld =list(declaration) con=fun_declaration fun=list(fun_declaration) RACCO 
-  {dec=ld;cons=con;fon=fun;}
+  IS LACCO ld =list(declaration) con=fun_declaration func=list(fun_declaration) RACCO 
+  {dec=ld;cons=con;fon=func;}
 
-objet_declaration
-    OBJECT n=ID IS LACCO ld =list(declaration) fun=list(fun_declaration) RACCO 
-    {{nom=n;dec =ld;fon=fun}}
+objet_declaration:
+    OBJECT n=ID IS LACCO ld =list(declaration) func=list(fun_declaration) RACCO 
+    {{nom=n;dec =ld;fon=func}}
 
 
 fun_declaration :
