@@ -17,8 +17,18 @@ let _ =
     [ "if", IF;
       "then", THEN;
       "else", ELSE;
-      "begin", BEGIN;
-      "end", END
+      "return", RETURN;
+      "class", CLASS;
+      "extends", EXTENDS;
+      "superclass", SUPER;
+      "is", IS;
+      "var", VAR;
+      "def", DEF;
+      "object", OBJECT;
+      "override", OVERRIDE;
+      "result", RESULT;
+      "as", AS;
+      "new", NEW;
     ]
 }
 
@@ -77,9 +87,15 @@ and
   | '/'            { DIV }
   | '('            { LPAREN }
   | ')'            { RPAREN }
+  | '{'						 { LACCO }
+  | '}'						 { RACCO }
   | ';'            { SEMICOLON }
+  | ':'            { DOUBLEPOINT } (* a renommer (dans ast et parse) en COLON *)
+  | ','            { COMMA }
+  | '.'            { DOT }
+  | '&'            { AND } (* a faire attention *)
   | ":="           { ASSIGN }
-  | "<"		   { RELOP (Ast.Lt) }
+  | "<"		         { RELOP (Ast.Lt) }
   | "<="           { RELOP (Ast.Le) }
   | ">"            { RELOP (Ast.Gt) }
   | ">="           { RELOP (Ast.Ge) }
