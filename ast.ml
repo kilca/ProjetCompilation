@@ -17,14 +17,16 @@ type expType =
 | Comp of opComp*expType*expType
 | Ite of expType*expType*expType 
 | Fun of string*expType list (*appel de la fonction/Class*)
-| NULL (*A voir si on garde ou pas*)
+| Call of string*expType
+| None (*A voir si on garde ou pas, chances que non*)
 
 (* Modifications *)
 
 type decl = {
     lhs: string;
     typ: defType;
-    rhs: expType;(*attention !!!! optionnel ou potentiellement Null*)
+    isVar: bool;
+    rhs: expType option;(*attention !!!! optionnel ou potentiellement Null*)
   }
 
 type paramDecl = decl list
@@ -32,25 +34,32 @@ type paramDecl = decl list
 type funDecl={
   nom : string;
   para: paramDecl;
-  typ : string; (*type de retour*) (*attention !!!! optionnel*)
+  typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
   bloc : decl list*expType;
+}
+type classBloc ={
+  dec : decl list;
+  cons : funDecl;
+  fon : funDecl list;
+
 }
 
 type classDecl = {
   nom : string;
   para : paramDecl;
-  ext : classDecl;(*attention !!! optionnel*)
-  dec : decl list;
-  fon : funDecl list;
+  ext : defType option;(*attention !!! optionnel*)
+  sup : defType option;(*attention !!! optionnel*)
+  clb : classBloc;
   }
 
 type objetDecl = {
+  nom : string;
   dec : decl list;
   fon : funDecl list;
 }
 
 type classObjDecl =
-  CLASS of classDecl
-  |OBJET of objetDecl
+  Class of classDecl
+  |Objet of objetDecl
 
 type prog = classObjDecl list*decl list*expType
