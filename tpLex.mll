@@ -113,7 +113,7 @@ and
   | '{'						 { LACCO }
   | '}'						 { RACCO }
   | ';'            { SEMICOLON }
-  | ':'            { DOUBLEPOINT } (* a renommer (dans ast et parse) en COLON *)
+  | ':'            { COLON }
   | ','            { COMMA }
   | "."            { DOT }
   | '&'            { AND } (* a faire attention *)

@@ -20,11 +20,11 @@ open Ast
 %token VAR
 %token DOT
 %token DEFTYPE
-%token DOUBLEPOINT
+%token COLON
 %token NEW
 %token RETURN (*A VOIR SI Existe*)
 %token OVERRIDE
-
+%token AS
 /* utilise pour donner une precedence maximale au - unaire
 * L'analyseur lexical ne renvoie jamais ce token !
 */
@@ -68,9 +68,9 @@ ASSIGN e = expr {e}
 | {None}
 
 declaration : 
-  x = ID DOUBLEPOINT ty=DEFTYPE e = declaration_init SEMICOLON
+  x = ID COLON ty=DEFTYPE e = declaration_init SEMICOLON
   { { lhs = x;typ=ty;isVar=false; rhs = e; } }
-  | VAR x = ID DOUBLEPOINT ty=DEFTYPE e = declaration_init SEMICOLON
+  | VAR x = ID COLON ty=DEFTYPE e = declaration_init SEMICOLON
   { { lhs = x;typ=ty;isVar=true; rhs = e; } }
 
 exprList:
@@ -82,18 +82,17 @@ expr:
     x = ID                        { Id x }
   | v = CSTE                      { Cste v }
   | g = expr PLUS d = expr        { Plus (g, d) }
-  | g = expr MINUS d = expr       { Minus(g, d) }
-  | g = expr TIMES d = expr       { Times(g, d) }
-  | g = expr DIV d = expr         { Div(g, d) }
+  | g = expr MINUS d = expr       { Minus (g, d) }
+  | g = expr TIMES d = expr       { Times (g, d) }
+  | g = expr DIV d = expr         { Div (g, d) }
   | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
-  | e = delimited (LPAREN, expr, RPAREN) { e }
-  | IF si=bexpr THEN alors=expr ELSE sinon = expr
-    { Ite(si, alors, sinon) }
-  | x=ID e=delimited (LPAREN, exprList, RPAREN) {x,e} (* appel fonction *)
-  | x=ID DOT e=expr {Call(x,e)} (*select *)
-  | AS x=ID DOUBLEPOINT e=expr {Cast(x,e)} (*cast *)
   | RETURN e = expr {Return(e)} (*A VOIR SI EXISTE*)
+  | e = delimited (LPAREN, expr, RPAREN)            { e }
+  | delimited(LPAREN, AS x=ID COLON e=expr, RPAREN) { Cast (x, e) }
+  | IF si=bexpr THEN alors=expr ELSE sinon = expr   { Ite (si, alors, sinon) }
+  | x=ID e=delimited (LPAREN, exprList, RPAREN)     { x, e } (* appel fonction *)
+  | x=ID DOT e=expr                                 { Call (x,e) }
 
 bexpr : (*bool expr du if *)
     g = expr op = RELOP d = expr  { Comp(op, g, d) }
@@ -124,7 +123,7 @@ objet_declaration:
 fun_declaration :
   DEF n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= blo;}}
-  | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
+  | DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON ty=DEFTYPE blo=fun_bloc
   {{nom= n;para=p;typ=ty;bloc= blo;}}
   | f=con_declaration {f}
   | f=fun_declaration_over {f}
