@@ -20,7 +20,6 @@ let _ =
       "return", RETURN;
       "class", CLASS;
       "extends", EXTENDS;
-      "superclass", SUPER;
       "is", IS;
       "var", VAR;
       "def", DEF;

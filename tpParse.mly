@@ -15,13 +15,15 @@ open Ast
 
 %token IF THEN ELSE
 
-%token CLASS SUPER EXTENDS IS
+%token CLASS EXTENDS IS AS
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
 %token DEFTYPE
 %token DOUBLEPOINT
 %token NEW
+%token RETURN (*A VOIR SI Existe*)
+
 /* utilise pour donner une precedence maximale au - unaire
 * L'analyseur lexical ne renvoie jamais ce token !
 */
@@ -81,7 +83,9 @@ expr:
   | IF si=bexpr THEN alors=expr ELSE sinon = expr
     { Ite(si, alors, sinon) }
   | x=ID e=delimited (LPAREN, exprList, RPAREN) {x,e} (* appel fonction *)
-  | x=ID DOT e=expr {Call(x,e)}
+  | x=ID DOT e=expr {Call(x,e)} (*select *)
+  | AS x=ID DOUBLEPOINT e=expr {Cast(x,e)} (*cast *)
+  | RETURN e = expr {Return(e)} (*A VOIR SI EXISTE*)
 
 bexpr : (*bool expr du if *)
     g = expr op = RELOP d = expr  { Comp(op, g, d) }
@@ -97,11 +101,7 @@ class_declaration :
     CLASS n=ID p = delimited (LPAREN,params,RPAREN) c=class_bloc 
     {{nom=n;para=p;ext=None;sup=None;cbl=c}}
     | CLASS n=ID p = delimited (LPAREN,params,RPAREN) EXTENDS ex=ID class_bloc 
-    {{nom=n;para=p;ext=ex;sup=None;cbl=c}}
-    | CLASS n=ID p = delimited (LPAREN,params,RPAREN) SUPER s=ID class_bloc 
-    {{nom=n;para=p;ext=None;sup=s;cbl=c}}
-    | CLASS n=ID p = delimited (LPAREN,params,RPAREN)  EXTENDS ex=ID SUPER s=ID class_bloc 
-    {{nom=n;para=p;ext=ex;sup=s;cbl=c}}
+    {{nom=n;para=p;ext=ex;cbl=c}}
 
 
 class_bloc: (*bloc de la classe *)
@@ -118,6 +118,11 @@ fun_declaration :
   {{nom= n;para=p;typ=None;bloc= blo;}}
   | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
   {{nom= n;para=p;typ=ty;bloc= blo;}}
+  (*cas constructeur *)
+  | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
+  {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
+  | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
+  {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
 
 params: (*definition des parametres *)
   d=declaration {d}

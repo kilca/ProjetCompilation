@@ -6,6 +6,7 @@ type defType=
   |String
   |Function of string (*Id de fonction ou classe*)
 
+
 type expType =
   Id of string
 | Cste of int
@@ -18,6 +19,8 @@ type expType =
 | Ite of expType*expType*expType 
 | Fun of string*expType list (*appel de la fonction/Class*)
 | Call of string*expType
+| Cast of string*expType
+| Return of expType
 | None (*A voir si on garde ou pas, chances que non*)
 
 (* Modifications *)
@@ -34,7 +37,10 @@ type paramDecl = decl list
 type funDecl={
   nom : string;
   para: paramDecl;
+
   typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
+  (*argType : expType list option; liste d'argument du constructeur parent*)
+
   bloc : decl list*expType;
 }
 type classBloc ={
@@ -48,7 +54,6 @@ type classDecl = {
   nom : string;
   para : paramDecl;
   ext : defType option;(*attention !!! optionnel*)
-  sup : defType option;(*attention !!! optionnel*)
   clb : classBloc;
   }
 
