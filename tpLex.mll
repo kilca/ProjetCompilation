@@ -61,6 +61,29 @@ rule
                      comment lexbuf
                    }
 and
+ quote content = parse
+  "\""            { 
+
+                    token lexbuf;content
+                  }
+  | '\n'           { (* incremente le compteur de ligne et poursuit la
+                      * reconnaissance du commentaire en cours
+                      *)
+                     new_line lexbuf; quote content lexbuf
+                   }
+  | eof            { (* detecte les commentaires non fermes pour pouvoir
+                      * faire un message d'erreur clair.
+                      * On pourrait stocker la position du dernier commentaire
+                      * encore ouvert pour ameliorer le dioagnostic
+                      *)
+                     failwith "unclosed quotation mark";
+                   }
+  | _ as any              { (* rien a faire de special pour ce caractere, donc on
+                      * poursuit la reconnaissance du commentaire en cours
+                      *)
+                     quote content^any lexbuf
+                   }
+  and
  token = parse
       lettre LC * as id
       { (* id contient le texte reconnu. On verifie s'il s'agit d'un mot-clef
@@ -80,6 +103,7 @@ and
   | '\n'           { next_line lexbuf; token lexbuf}
   | chiffre+ as lxm { CSTE(int_of_string lxm) }
   | "/*"           { comment lexbuf }
+  | "\""            { CSTE(quote "" lexbuf)}
   | '+'            { PLUS }
   | '-'            { MINUS }
   | '*'            { TIMES }
@@ -91,7 +115,7 @@ and
   | ';'            { SEMICOLON }
   | ':'            { DOUBLEPOINT } (* a renommer (dans ast et parse) en COLON *)
   | ','            { COMMA }
-  | '.'            { DOT }
+  | "."            { DOT }
   | '&'            { AND } (* a faire attention *)
   | ":="           { ASSIGN }
   | "<"		         { RELOP (Ast.Lt) }
