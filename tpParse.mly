@@ -120,19 +120,21 @@ fun_declaration :
   {{nom= n;para=p;typ=None;bloc= blo;}}
   | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
   {{nom= n;para=p;typ=ty;bloc= blo;}}
-  (*cas constructeur *)
-  | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
+  | f=con_declaration {f}
+  | f=fun_declaration_over {f}
+
+con_declaration :
+   DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
   | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
 
-fun_declaration_over : :
-{
+fun_declaration_over : 
   DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
-  {{nom= n;para=p;typ=None;bloc= blo;}}
+  {{nom= n;para=p;typ=None;bloc= blo}}
   | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
-  {{nom= n;para=p;typ=ty;bloc= blo;}} 
-}
+  {{nom= n;para=p;typ=ty;bloc= blo}} 
+
 
 params: (*definition des parametres *)
   d=declaration {d}

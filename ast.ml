@@ -37,11 +37,10 @@ type paramDecl = decl list
 type funDecl={
   nom : string;
   para: paramDecl;
-
   typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
   (*argType : expType list option; liste d'argument du constructeur parent*)
-
   bloc : decl list*expType;
+  (* est ce qu'on ajoute un bool pour savoir si cons*)
 }
 type classBloc ={
   dec : decl list;
