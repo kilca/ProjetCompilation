@@ -23,6 +23,7 @@ open Ast
 %token DOUBLEPOINT
 %token NEW
 %token RETURN (*A VOIR SI Existe*)
+%token OVERRIDE
 
 /* utilise pour donner une precedence maximale au - unaire
 * L'analyseur lexical ne renvoie jamais ce token !
@@ -43,6 +44,7 @@ open Ast
 %type <expType list> exprList
 %type <classDecl> class_declaration
 %type <objetDecl> objet_declaration
+%type <funDecl> fun_declaration fun_declaration_over
 
 %start<Ast.progType> prog
 %%
@@ -123,6 +125,14 @@ fun_declaration :
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
   | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
+
+fun_declaration_over : :
+{
+  DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
+  {{nom= n;para=p;typ=None;bloc= blo;}}
+  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
+  {{nom= n;para=p;typ=ty;bloc= blo;}} 
+}
 
 params: (*definition des parametres *)
   d=declaration {d}
