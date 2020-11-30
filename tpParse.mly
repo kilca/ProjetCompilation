@@ -15,16 +15,16 @@ open Ast
 
 %token IF THEN ELSE
 
-%token CLASS EXTENDS IS AS
+%token CLASS EXTENDS IS
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
 %token DEFTYPE
-%token DOUBLEPOINT
+%token COLON
 %token NEW
 %token RETURN (*A VOIR SI Existe*)
 %token OVERRIDE
-
+%token AS
 /* utilise pour donner une precedence maximale au - unaire
 * L'analyseur lexical ne renvoie jamais ce token !
 */
@@ -32,10 +32,16 @@ open Ast
 
 %token EOF
 
+
 %right ELSE
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
+%left DOT 				/*je trouve la regle mal ecrite*/
+%right COLON
+%left RETURN
+						/*reste un conflit mais je trouve pas comment le resoudre*/
+
 
 %type <classObjDecl> classeobj 
 %type <expType> expr bexpr declaration_init
@@ -62,9 +68,9 @@ ASSIGN e = expr {e}
 | {None}
 
 declaration : 
-  x = ID DOUBLEPOINT ty=DEFTYPE e = declaration_init SEMICOLON
+  x = ID COLON ty=DEFTYPE e = declaration_init SEMICOLON
   { { lhs = x;typ=ty;isVar=false; rhs = e; } }
-  | VAR x = ID DOUBLEPOINT ty=DEFTYPE e = declaration_init SEMICOLON
+  | VAR x = ID COLON ty=DEFTYPE e = declaration_init SEMICOLON
   { { lhs = x;typ=ty;isVar=true; rhs = e; } }
 
 exprList:
@@ -76,18 +82,17 @@ expr:
     x = ID                        { Id x }
   | v = CSTE                      { Cste v }
   | g = expr PLUS d = expr        { Plus (g, d) }
-  | g = expr MINUS d = expr       { Minus(g, d) }
-  | g = expr TIMES d = expr       { Times(g, d) }
-  | g = expr DIV d = expr         { Div(g, d) }
+  | g = expr MINUS d = expr       { Minus (g, d) }
+  | g = expr TIMES d = expr       { Times (g, d) }
+  | g = expr DIV d = expr         { Div (g, d) }
   | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
-  | e = delimited (LPAREN, expr, RPAREN) { e }
-  | IF si=bexpr THEN alors=expr ELSE sinon = expr
-    { Ite(si, alors, sinon) }
-  | x=ID e=delimited (LPAREN, exprList, RPAREN) {x,e} (* appel fonction *)
-  | x=ID DOT e=expr {Call(x,e)} (*select *)
-  | AS x=ID DOUBLEPOINT e=expr {Cast(x,e)} (*cast *)
   | RETURN e = expr {Return(e)} (*A VOIR SI EXISTE*)
+  | e = delimited (LPAREN, expr, RPAREN)            { e }
+  | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
+  | IF si=bexpr THEN alors=expr ELSE sinon = expr   { Ite (si, alors, sinon) }
+  | x=ID e=delimited (LPAREN, exprList, RPAREN)     { x, e } (* appel fonction *)
+  | x=ID DOT e=expr                                 { Call (x,e) }
 
 bexpr : (*bool expr du if *)
     g = expr op = RELOP d = expr  { Comp(op, g, d) }
@@ -118,19 +123,17 @@ objet_declaration:
 fun_declaration :
   DEF n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= blo;}}
-  | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
+  | DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON ty=DEFTYPE blo=fun_bloc
   {{nom= n;para=p;typ=ty;bloc= blo;}}
-  (*cas constructeur *)
-  | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
+  | f=con_declaration {f}
+  | f=fun_declaration_over {f}
+
+con_declaration :
+   DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
-  | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
+  | DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
 
-fun_declaration_over : :
-  DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
-  {{nom= n;para=p;typ=None;bloc= blo;}}
-  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
-  {{nom= n;para=p;typ=ty;bloc= blo;}} 
 
   instruction :
 x = expr SEMICOLON { ex(x} }
@@ -140,6 +143,12 @@ x = expr SEMICOLON { ex(x} }
 |IF a = expr THEN b = instruction ELSE c = instruction SEMICOLON
  {Ite(a,b,c)}
 | e = delimited(LPAREN, expr, RPAREN) {e}
+
+fun_declaration_over : 
+  DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
+  {{nom= n;para=p;typ=None;bloc= blo}}
+  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) COLON ty=DEFTYPE blo=fun_bloc
+  {{nom= n;para=p;typ=ty;bloc= blo}}
 
 
 params: (*definition des parametres *)

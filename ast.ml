@@ -16,7 +16,8 @@ type expType =
 | Div of expType*expType
 | UMinus of expType
 | Comp of opComp*expType*expType
-| Ite of expType*expType*expType 
+| Ite of expType*expType*expType
+| Cast of string*expType
 | Fun of string*expType list (*appel de la fonction/Class*)
 | Call of string*expType
 | Cast of string*expType
@@ -37,11 +38,10 @@ type paramDecl = decl list
 type funDecl={
   nom : string;
   para: paramDecl;
-
   typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
   (*argType : expType list option; liste d'argument du constructeur parent*)
-
   bloc : decl list*expType;
+  (* est ce qu'on ajoute un bool pour savoir si cons*)
 }
 type classBloc ={
   dec : decl list;
