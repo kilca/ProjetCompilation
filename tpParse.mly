@@ -32,10 +32,16 @@ open Ast
 
 %token EOF
 
+
 %right ELSE
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
+%left DOT 				/*je trouve la regle mal ecrite*/
+%right DOUBLEPOINT
+%left RETURN
+						/*reste un conflit mais je trouve pas comment le resoudre*/
+
 
 %type <classObjDecl> classeobj 
 %type <expType> expr bexpr declaration_init
