@@ -16,7 +16,7 @@ open Ast
 
 %token IF THEN ELSE
 
-%token CLASS EXTENDS IS AS
+%token CLASS EXTENDS IS
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
@@ -39,7 +39,7 @@ open Ast
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
 %left DOT 				/*je trouve la regle mal ecrite*/
-%right DOUBLEPOINT
+%right COLON
 %left RETURN
 						/*reste un conflit mais je trouve pas comment le resoudre*/
 
@@ -51,7 +51,7 @@ open Ast
 %type <expType list> exprList
 %type <classDecl> class_declaration
 %type <objetDecl> objet_declaration
-%type <funDecl> fun_declaration fun_declaration_over
+%type <funDecl> fun_declaration
 
 %start<Ast.progType> prog
 %%
@@ -67,6 +67,8 @@ declaration_init :
 ASSIGN e = expr {e}
 | ASSIGN NEW e = expr {e}
 | {None}
+
+bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO EOF {Bloc(ld, l) }
 
 declaration : 
   x = ID COLON ty=DEFTYPE e = declaration_init SEMICOLON
@@ -88,13 +90,11 @@ expr:
   | g = expr DIV d = expr         { Div (g, d) }
   | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
-  | RETURN e = expr {Return(e)} (*A VOIR SI EXISTE*)
   | e = delimited (LPAREN, expr, RPAREN)            { e }
-  | delimited(LPAREN, AS x=ID COLON e=expr, RPAREN) { Cast (x, e) }
-  | IF si=bexpr THEN alors=expr ELSE sinon = expr   { Ite (si, alors, sinon) }
-  | x=ID e=delimited (LPAREN, exprList, RPAREN)     { x, e } (* appel fonction *)
+  | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
   | x=ID DOT e=fexpr                                 { Call (x,e) }
   | x=CLASSID DOT e=fexpr   { Call (x,e) }  (* Objet.func() attention peut amener erreur*)
+(*probleme avec cas call cast entre parenthese*)
 
 fexpr : (*expression de fonction*)
   i=ID param=delimited(LPAREN,exprList,RPAREN)
@@ -104,17 +104,9 @@ bexpr : (*bool expr du if *)
     g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, bexpr, RPAREN) { e }
 
-fun_bloc:(*bloc de fonction*)
-    IS LACCO ld =list(declaration) IS e = expr RACCO EOF 
-    {ld, e }
-  | IS LACCO e = expr RACCO EOF {[],e}
-  | ASSIGN e=expr {[],e}
-
 class_declaration :
-    CLASS n=ID p = delimited (LPAREN,params,RPAREN) c=class_bloc 
-    {{nom=n;para=p;ext=None;sup=None;cbl=c}}
-    | CLASS n=ID p = delimited (LPAREN,params,RPAREN) EXTENDS ex=ID class_bloc 
-    {{nom=n;para=p;ext=ex;cbl=c}}
+    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) o=option(EXTENDS) ex=CLASSID class_bloc 
+    {{nom=n;para=p;ext=o;cbl=c}}
 
 
 class_bloc: (*bloc de la classe *)
@@ -127,34 +119,27 @@ objet_declaration:
 
 
 fun_declaration :
-  DEF n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
-  {{nom= n;para=p;typ=None;bloc= blo;}}
-  | DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON ty=DEFTYPE blo=fun_bloc
-  {{nom= n;para=p;typ=ty;bloc= blo;}}
-  | f=fun_declaration_over {f}
+  DEF ov=boption(opt_overr) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
+  {{nom= n;para=p;typ=o;over=ov;bloc= blo;}}
 
+opt_overr : OVERRIDE n=ID {n}
+opt_type : COLON ty=DEFTYPE {ty}
+
+(*a modifier*)
 con_declaration :
-   DEF n = CLASSID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
+   DEF n = CLASSID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) IS blo=bloc
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
-  | DEF n = CLASSID p = delimited (LPAREN,params,RPAREN)  blo=fun_bloc
+  | DEF n = CLASSID p = delimited (LPAREN,params,RPAREN)  blo=bloc
   {{nom= n;para=p;typ=None;bloc= blo}}
 
-
-  instruction :
-x = expr SEMICOLON { ex(x} }
-| x = fun_bloc {Bloc(x)}
-|RETURN x = expr SIMICOLON {R(x)}
-|g = ID ASSIGN d = expr SEMICOLON  {X(g,d)}
-|IF a = expr THEN b = instruction ELSE c = instruction SEMICOLON
- {Ite(a,b,c)}
-| e = delimited(LPAREN, expr, RPAREN) {e}
-
-fun_declaration_over : 
-  DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
-  {{nom= n;para=p;typ=None;bloc= blo}}
-  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) COLON ty=DEFTYPE blo=fun_bloc
-  {{nom= n;para=p;typ=ty;bloc= blo}}
-
+instruction :
+  x = expr SEMICOLON { Expr(x) }
+  | x = bloc {Bloc(x)}
+  |RETURN x = expr SEMICOLON {Return(x)}
+  |g = ID ASSIGN d = expr SEMICOLON  {Assign(g,d)}
+  |IF a = bexpr THEN b = instruction ELSE c = instruction
+   {Ite(a,b,c)}
+  | e = expr {e}
 
 params: (*definition des parametres *)
   d=declaration {d}

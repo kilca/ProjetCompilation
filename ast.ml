@@ -22,7 +22,6 @@ type expType =
 | Fun of string*expType list (*appel de la fonction/Class*)
 | Call of string*string*expType
 | Cast of string*expType
-| Return of expType
 | None (*A voir si on garde ou pas, chances que non*)
 
 (* Modifications *)
@@ -49,6 +48,7 @@ type funDecl={
   para: paramDecl;
   typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
   (*argType : expType list option; liste d'argument du constructeur parent*)
+  over : bool;
   bloc : decl list*expType;
 }
 type classBloc ={
@@ -57,6 +57,7 @@ type classBloc ={
   fon : funDecl list;
 
 }
+
 
 type classDecl = {
   nom : string;
@@ -71,12 +72,14 @@ type objetDecl = {
   fon : funDecl list;
 }
 
+type block= instruction list;
+
 type instruction =
- ex of expType
-| Bloc of fun_bloc
-| R of expr
-|Ite of expr*instr*instr
-| ASSI of expr
+ Expr of expType
+| Block of declaration list*instruction list
+| Return of expType
+| Ite of expType*instr*instr
+| Assign of expType*expType
 
 type classObjDecl =
   Class of classDecl
