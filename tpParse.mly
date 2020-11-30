@@ -15,7 +15,7 @@ open Ast
 
 %token IF THEN ELSE
 
-%token CLASS EXTENDS IS AS
+%token CLASS EXTENDS IS
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
@@ -38,7 +38,7 @@ open Ast
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
 %left DOT 				/*je trouve la regle mal ecrite*/
-%right DOUBLEPOINT
+%right COLON
 %left RETURN
 						/*reste un conflit mais je trouve pas comment le resoudre*/
 
@@ -89,7 +89,7 @@ expr:
   | MINUS e = expr %prec UMINUS   { UMinus e }
   | RETURN e = expr {Return(e)} (*A VOIR SI EXISTE*)
   | e = delimited (LPAREN, expr, RPAREN)            { e }
-  | delimited(LPAREN, AS x=ID COLON e=expr, RPAREN) { Cast (x, e) }
+  | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
   | IF si=bexpr THEN alors=expr ELSE sinon = expr   { Ite (si, alors, sinon) }
   | x=ID e=delimited (LPAREN, exprList, RPAREN)     { x, e } (* appel fonction *)
   | x=ID DOT e=expr                                 { Call (x,e) }
@@ -129,15 +129,15 @@ fun_declaration :
   | f=fun_declaration_over {f}
 
 con_declaration :
-   DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
+   DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
-  | DEF n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
+  | DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
 
 fun_declaration_over : 
   DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= blo}}
-  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
+  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) COLON ty=DEFTYPE blo=fun_bloc
   {{nom= n;para=p;typ=ty;bloc= blo}} 
 
 
