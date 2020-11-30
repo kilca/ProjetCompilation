@@ -9,6 +9,7 @@ type defType=
 
 type expType =
   Id of string
+| ClassID of string
 | Cste of int
 | Plus of expType*expType
 | Minus of expType*expType
@@ -19,7 +20,7 @@ type expType =
 | Ite of expType*expType*expType
 | Cast of string*expType
 | Fun of string*expType list (*appel de la fonction/Class*)
-| Call of string*expType
+| Call of string*string*expType
 | Cast of string*expType
 | Return of expType
 | None (*A voir si on garde ou pas, chances que non*)
@@ -35,13 +36,20 @@ type decl = {
 
 type paramDecl = decl list
 
+type consDecl={
+  nom : string;
+  para: paramDecl;
+  typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
+  (*argType : expType list option; liste d'argument du constructeur parent*)
+  bloc : decl list*expType;
+}
+
 type funDecl={
   nom : string;
   para: paramDecl;
   typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
   (*argType : expType list option; liste d'argument du constructeur parent*)
   bloc : decl list*expType;
-  (* est ce qu'on ajoute un bool pour savoir si cons*)
 }
 type classBloc ={
   dec : decl list;

@@ -32,6 +32,8 @@ let _ =
 }
 
 let lettre = ['A'-'Z' 'a'-'z']
+let lettreMin = ['a'-'z']
+let lettreMaj = ['A'-'Z']
 let chiffre = ['0'-'9']
 let LC = ( chiffre | lettre )
 
@@ -66,9 +68,7 @@ and
 
                     token lexbuf;content
                   }
-  | '\n'           { (* incremente le compteur de ligne et poursuit la
-                      * reconnaissance du commentaire en cours
-                      *)
+  | '\n'           { 
                      new_line lexbuf; quote content lexbuf
                    }
   | eof            { (* detecte les commentaires non fermes pour pouvoir
@@ -85,7 +85,7 @@ and
                    }
   and
  token = parse
-      lettre LC * as id
+      lettreMin LC * as id
       { (* id contient le texte reconnu. On verifie s'il s'agit d'un mot-clef
          * auquel cas on renvoie le token associe. Sinon on renvoie Id avec le
          * texte reconnu en valeur 
@@ -93,6 +93,15 @@ and
         try
           Hashtbl.find keyword_table id
         with Not_found -> ID id
+      }
+  | lettreMaj LC * as id
+      { (* id contient le texte reconnu. On verifie s'il s'agit d'un mot-clef
+         * auquel cas on renvoie le token associe. Sinon on renvoie Id avec le
+         * texte reconnu en valeur 
+         *)
+        try
+          Hashtbl.find keyword_table id
+        with Not_found -> CLASSID id
       }
   | [' ''\t''\r']+  { (* consommer les delimiteurs, ne pas les transmettre
                        * et renvoyer ce que renverra un nouvel appel a

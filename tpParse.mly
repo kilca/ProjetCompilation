@@ -3,6 +3,7 @@
 open Ast
 %}
 %token <string> ID
+%token <string> CLASSID
 %token <int> CSTE
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV
@@ -15,7 +16,7 @@ open Ast
 
 %token IF THEN ELSE
 
-%token CLASS EXTENDS IS
+%token CLASS EXTENDS IS AS
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
@@ -38,7 +39,7 @@ open Ast
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
 %left DOT 				/*je trouve la regle mal ecrite*/
-%right COLON
+%right DOUBLEPOINT
 %left RETURN
 						/*reste un conflit mais je trouve pas comment le resoudre*/
 
@@ -89,10 +90,15 @@ expr:
   | MINUS e = expr %prec UMINUS   { UMinus e }
   | RETURN e = expr {Return(e)} (*A VOIR SI EXISTE*)
   | e = delimited (LPAREN, expr, RPAREN)            { e }
-  | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
+  | delimited(LPAREN, AS x=ID COLON e=expr, RPAREN) { Cast (x, e) }
   | IF si=bexpr THEN alors=expr ELSE sinon = expr   { Ite (si, alors, sinon) }
   | x=ID e=delimited (LPAREN, exprList, RPAREN)     { x, e } (* appel fonction *)
-  | x=ID DOT e=expr                                 { Call (x,e) }
+  | x=ID DOT e=fexpr                                 { Call (x,e) }
+  | x=CLASSID DOT e=fexpr   { Call (x,e) }  (* Objet.func() attention peut amener erreur*)
+
+fexpr : (*expression de fonction*)
+  i=ID param=delimited(LPAREN,exprList,RPAREN)
+  {i,param}
 
 bexpr : (*bool expr du if *)
     g = expr op = RELOP d = expr  { Comp(op, g, d) }
@@ -112,7 +118,7 @@ class_declaration :
 
 
 class_bloc: (*bloc de la classe *)
-  IS LACCO ld =list(declaration) con=fun_declaration func=list(fun_declaration) RACCO 
+  IS LACCO ld =list(declaration) con=con_declaration func=list(fun_declaration) RACCO 
   {dec=ld;cons=con;fon=func;}
 
 objet_declaration:
@@ -125,19 +131,18 @@ fun_declaration :
   {{nom= n;para=p;typ=None;bloc= blo;}}
   | DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON ty=DEFTYPE blo=fun_bloc
   {{nom= n;para=p;typ=ty;bloc= blo;}}
-  | f=con_declaration {f}
   | f=fun_declaration_over {f}
 
 con_declaration :
-   DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
+   DEF n = CLASSID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
-  | DEF n = ID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) blo=fun_bloc
-  {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
+  | DEF n = CLASSID p = delimited (LPAREN,params,RPAREN)  blo=fun_bloc
+  {{nom= n;para=p;typ=None;bloc= blo}}
 
 fun_declaration_over : 
   DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= blo}}
-  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) COLON ty=DEFTYPE blo=fun_bloc
+  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
   {{nom= n;para=p;typ=ty;bloc= blo}} 
 
 
