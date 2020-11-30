@@ -71,6 +71,13 @@ type objetDecl = {
   fon : funDecl list;
 }
 
+type instruction =
+ ex of expType
+| Bloc of fun_bloc
+| R of expr
+|Ite of expr*instr*instr
+| ASSI of expr
+
 type classObjDecl =
   Class of classDecl
   |Objet of objetDecl

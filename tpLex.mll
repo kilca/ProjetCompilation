@@ -69,8 +69,13 @@ and
                     token lexbuf;content
                   }
   | '\n'           { 
-                     new_line lexbuf; quote content lexbuf
+                     failwith "end of line not allowed in a quote";
                    }
+
+  | "\\\"" as guil  { 
+                     quote content^"\"" lexbuf
+                   }
+  
   | eof            { (* detecte les commentaires non fermes pour pouvoir
                       * faire un message d'erreur clair.
                       * On pourrait stocker la position du dernier commentaire

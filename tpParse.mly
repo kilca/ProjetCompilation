@@ -139,11 +139,21 @@ con_declaration :
   | DEF n = CLASSID p = delimited (LPAREN,params,RPAREN)  blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= blo}}
 
+
+  instruction :
+x = expr SEMICOLON { ex(x} }
+| x = fun_bloc {Bloc(x)}
+|RETURN x = expr SIMICOLON {R(x)}
+|g = ID ASSIGN d = expr SEMICOLON  {X(g,d)}
+|IF a = expr THEN b = instruction ELSE c = instruction SEMICOLON
+ {Ite(a,b,c)}
+| e = delimited(LPAREN, expr, RPAREN) {e}
+
 fun_declaration_over : 
   DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) blo=fun_bloc
   {{nom= n;para=p;typ=None;bloc= blo}}
-  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) DOUBLEPOINT ty=DEFTYPE blo=fun_bloc
-  {{nom= n;para=p;typ=ty;bloc= blo}} 
+  | DEF OVERRIDE n = ID p = delimited (LPAREN,params,RPAREN) COLON ty=DEFTYPE blo=fun_bloc
+  {{nom= n;para=p;typ=ty;bloc= blo}}
 
 
 params: (*definition des parametres *)
