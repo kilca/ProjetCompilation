@@ -4,7 +4,8 @@ open Ast
     * ce qu'on puisse facilement verifier si les précédences et associativités
     * demandées sont bien respectées.
     *)
-let rec printExpr e =
+let rec printExpr e = "TEST"
+   (*
   match e with
       Id s -> print_string s
     | Cste i -> print_int i
@@ -29,8 +30,10 @@ let rec printExpr e =
      print_string " THEN "; printExpr alors;
      print_string " ELSE "; printExpr sinon;
      print_endline "]"
-
+     *)
+(*
 let printDecl d =
   print_string d.lhs; print_string " := "; printExpr d.rhs;
   print_newline ();
 ;;
+*)

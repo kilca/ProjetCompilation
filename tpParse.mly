@@ -20,7 +20,7 @@ open Ast
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
-%token DEFTYPE
+%token <Ast.defType>DEFTYPE
 %token COLON
 %token NEW
 %token RETURN (*A VOIR SI Existe*)
@@ -33,14 +33,13 @@ open Ast
 
 %token EOF
 
-
-%right ELSE
+//%left RETURN
+//%right ELSE
+//%left DOT 				/*je trouve la regle mal ecrite*/
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
-%left DOT 				/*je trouve la regle mal ecrite*/
-%right COLON
-%left RETURN
+//%right COLON
 						/*reste un conflit mais je trouve pas comment le resoudre*/
 
 
@@ -66,19 +65,20 @@ classeobj :
 declaration_init :
 ASSIGN e = expr {e}
 | ASSIGN NEW e = expr {e}
-| {None}
 
-bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO EOF {Bloc(ld, l) }
+(*ne pas def %type ici *)
+bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO EOF {ld, l}
 
 declaration : 
-  x = ID COLON ty=DEFTYPE e = declaration_init SEMICOLON
+  x = ID COLON ty=DEFTYPE e = option(declaration_init) SEMICOLON
   { { lhs = x;typ=ty;isVar=false; rhs = e; } }
-  | VAR x = ID COLON ty=DEFTYPE e = declaration_init SEMICOLON
+  | VAR x = ID COLON ty=DEFTYPE e = option(declaration_init) SEMICOLON
   { { lhs = x;typ=ty;isVar=true; rhs = e; } }
+
 
 exprList:
   e= expr {[e]}
-  | e=expr COMMA s=exprList {s::e}
+  | e=expr COMMA s=exprList {e::s}
   |{[]}
 
 expr:
@@ -92,56 +92,55 @@ expr:
   | MINUS e = expr %prec UMINUS   { UMinus e }
   | e = delimited (LPAREN, expr, RPAREN)            { e }
   | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
-  | x=ID DOT e=fexpr                                 { Call (x,e) }
-  | x=CLASSID DOT e=fexpr   { Call (x,e) }  (* Objet.func() attention peut amener erreur*)
+  | x=ID DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
+  | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (x,i,param) } 
+  (* Objet.func() attention peut amener erreur*)
 (*probleme avec cas call cast entre parenthese*)
-
-fexpr : (*expression de fonction*)
-  i=ID param=delimited(LPAREN,exprList,RPAREN)
-  {i,param}
 
 bexpr : (*bool expr du if *)
     g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, bexpr, RPAREN) { e }
 
 class_declaration :
-    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) o=option(EXTENDS) ex=CLASSID class_bloc 
+    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) o=option(EXTENDS) ex=CLASSID c=class_bloc 
     {{nom=n;para=p;ext=o;cbl=c}}
 
 
 class_bloc: (*bloc de la classe *)
   IS LACCO ld =list(declaration) con=con_declaration func=list(fun_declaration) RACCO 
-  {dec=ld;cons=con;fon=func;}
+  {{dec=ld;cons=con;fon=func;}}
 
 objet_declaration:
     OBJECT n=ID IS LACCO ld =list(declaration) func=list(fun_declaration) RACCO 
     {{nom=n;dec =ld;fon=func}}
 
-
 fun_declaration :
   DEF ov=boption(opt_overr) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
-  {{nom= n;para=p;typ=o;over=ov;bloc= blo;}}
+  {{nom= n;para=p;typ=o;over=ov;blocf= blo;}}
 
 opt_overr : OVERRIDE n=ID {n}
 opt_type : COLON ty=DEFTYPE {ty}
 
-(*a modifier*)
-con_declaration :
+(*a modifier (ai juste enleve les erreurs)*)
+con_declaration : 
    DEF n = CLASSID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) IS blo=bloc
-  {{nom= n;para=p;typ=None;bloc= Call(i,Fun(i,p2)) :: blo}}
+  (*
+  {{nom= n;para=p;typ=None;blocf= Call(i,Fun(i,p2)) :: blo}}
+  *)
+    {{nom= n;para=p;over=false;typ=None;blocf= blo}}
   | DEF n = CLASSID p = delimited (LPAREN,params,RPAREN)  blo=bloc
-  {{nom= n;para=p;typ=None;bloc= blo}}
+  {{nom= n;para=p;over=false;typ=None;blocf= blo}}
+  
 
 instruction :
   x = expr SEMICOLON { Expr(x) }
-  | x = bloc {Bloc(x)}
+  | x = bloc {Bloc (x)}
   |RETURN x = expr SEMICOLON {Return(x)}
   |g = ID ASSIGN d = expr SEMICOLON  {Assign(g,d)}
   |IF a = bexpr THEN b = instruction ELSE c = instruction
    {Ite(a,b,c)}
-  | e = expr {e}
 
 params: (*definition des parametres *)
-  d=declaration {d}
+  d=declaration {[d]}
   |{[]}
-  | d=declaration COMMA p=params {p::d}
+  | d=declaration COMMA p=params {d::p}

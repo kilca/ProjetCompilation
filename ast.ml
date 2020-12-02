@@ -1,6 +1,8 @@
 type opComp =
   Eq | Neq | Lt | Le | Gt | Ge
 
+
+(*A supprimer ?*)
 type defType=
   Integer
   |String
@@ -20,15 +22,14 @@ type expType =
 | Ite of expType*expType*expType
 | Cast of string*expType
 | Fun of string*expType list (*appel de la fonction/Class*)
-| Call of string*string*expType
-| Cast of string*expType
+| Call of string*string*expType list
 | None (*A voir si on garde ou pas, chances que non*)
 
 (* Modifications *)
 
 type decl = {
     lhs: string;
-    typ: defType;
+    typ: defType; (*string ou defType ?*)
     isVar: bool;
     rhs: expType option;(*attention !!!! optionnel ou potentiellement Null*)
   }
@@ -43,14 +44,25 @@ type consDecl={
   bloc : decl list*expType;
 }
 
+(*Probleme ici, ne marche pas*)
+type blocType = decl list*instr list
+and
+instr =
+ Expr of expType
+| Bloc of blocType
+| Return of expType
+| Ite of expType*instr*instr
+| Assign of string*expType
+
 type funDecl={
   nom : string;
   para: paramDecl;
   typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
   (*argType : expType list option; liste d'argument du constructeur parent*)
   over : bool;
-  bloc : decl list*expType;
+  blocf : blocType;
 }
+
 type classBloc ={
   dec : decl list;
   cons : funDecl;
@@ -63,7 +75,7 @@ type classDecl = {
   nom : string;
   para : paramDecl;
   ext : defType option;(*attention !!! optionnel*)
-  clb : classBloc;
+  cbl : classBloc;
   }
 
 type objetDecl = {
@@ -72,17 +84,10 @@ type objetDecl = {
   fon : funDecl list;
 }
 
-type block= instruction list;
-
-type instruction =
- Expr of expType
-| Block of declaration list*instruction list
-| Return of expType
-| Ite of expType*instr*instr
-| Assign of expType*expType
+(* type block = instr list; *)
 
 type classObjDecl =
   Class of classDecl
   |Objet of objetDecl
 
-type prog = classObjDecl list*decl list*expType
+type progType = classObjDecl list*decl list*expType
