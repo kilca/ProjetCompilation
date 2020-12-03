@@ -36,13 +36,6 @@ type decl = {
 
 type paramDecl = decl list
 
-type consDecl={
-  nom : string;
-  para: paramDecl;
-  typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
-  (*argType : expType list option; liste d'argument du constructeur parent*)
-  bloc : decl list*expType;
-}
 
 (*Probleme ici, ne marche pas*)
 type blocType = decl list*instr list
@@ -53,6 +46,12 @@ instr =
 | Return of expType
 | Ite of expType*instr*instr
 | Assign of string*expType
+
+type consDecl={
+  nom : string;
+  para: paramDecl;
+  bloc : blocType;
+}
 
 type funDecl={
   nom : string;
@@ -65,7 +64,7 @@ type funDecl={
 
 type classBloc ={
   dec : decl list;
-  cons : funDecl;
+  cons : consDecl;
   fon : funDecl list;
 
 }
@@ -90,4 +89,4 @@ type classObjDecl =
   Class of classDecl
   |Objet of objetDecl
 
-type progType = classObjDecl list*decl list*expType
+type progType = classObjDecl list*blocType

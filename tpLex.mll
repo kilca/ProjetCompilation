@@ -61,6 +61,7 @@ rule
                       *)
                      comment lexbuf
                    }
+(*
 and
  quote content = parse
   "\""            { 
@@ -72,7 +73,7 @@ and
                    }
 
   | "\\\"" as guil  { 
-                     quote content^"\"" lexbuf
+                     quote (content^"\"") lexbuf
                    }
   
   | eof            { (* detecte les commentaires non fermes pour pouvoir
@@ -85,8 +86,10 @@ and
   | _ as any              { (* rien a faire de special pour ce caractere, donc on
                       * poursuit la reconnaissance du commentaire en cours
                       *)
-                     quote content^any lexbuf
+                     quote (content^any) lexbuf 
+                     
                    }
+*)
   and
  token = parse
       lettreMin LC * as id
@@ -116,7 +119,9 @@ and
   | '\n'           { next_line lexbuf; token lexbuf}
   | chiffre+ as lxm { CSTE(int_of_string lxm) }
   | "/*"           { comment lexbuf }
-  | "\""            { CSTE(quote "" lexbuf)}
+  
+  (* | "\""            { CSTE(quote "" lexbuf)} *)
+  
   | '+'            { PLUS }
   | '-'            { MINUS }
   | '*'            { TIMES }
@@ -129,7 +134,7 @@ and
   | ':'            { COLON }
   | ','            { COMMA }
   | "."            { DOT }
-  | '&'            { AND } (* a faire attention *)
+  (* | '&'            { AND }  *)
   | ":="           { ASSIGN }
   | "<"		         { RELOP (Ast.Lt) }
   | "<="           { RELOP (Ast.Le) }

@@ -31,9 +31,8 @@ let rec printExpr e = "TEST"
      print_string " ELSE "; printExpr sinon;
      print_endline "]"
      *)
-(*
-let printDecl d =
-  print_string d.lhs; print_string " := "; printExpr d.rhs;
+
+let printDecl d = 
+  print_string d.lhs; print_string " := "; (*printExpr d.rhs;*)
   print_newline ();
 ;;
-*)

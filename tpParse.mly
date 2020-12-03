@@ -56,7 +56,7 @@ open Ast
 %%
 
 (*entierete du prog avec main *)
-prog:  lc=list(classeobj) LACCO ld =list(declaration) IS i = expr RACCO EOF {lc,ld,i}
+prog:  lc=list(classeobj) b=bloc EOF {lc,b}
 
 classeobj :
   x = class_declaration {Class(x)}
@@ -67,7 +67,7 @@ ASSIGN e = expr {e}
 | ASSIGN NEW e = expr {e}
 
 (*ne pas def %type ici *)
-bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO EOF {ld, l}
+bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO {ld, l}
 
 declaration : 
   x = ID COLON ty=DEFTYPE e = option(declaration_init) SEMICOLON
@@ -104,7 +104,7 @@ bexpr : (*bool expr du if *)
 opt_ext: EXTENDS e=CLASSID{e}
 
 class_declaration :
-    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) ex=option(opt_ext) c=class_bloc 
+    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) ex=opt_ext c=class_bloc 
     {{nom=n;para=p;ext=ex;cbl=c}}
 
 class_bloc: (*bloc de la classe *)
@@ -124,13 +124,12 @@ fun_declaration :
 
 (*a modifier (ai juste enleve les erreurs)*)
 con_declaration : 
+/*
    DEF n = CLASSID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) IS blo=bloc
-  (*
-  {{nom= n;para=p;typ=None;blocf= Call(i,Fun(i,p2)) :: blo}}
-  *)
     {{nom= n;para=p;over=false;typ=None;blocf= blo}}
-  | DEF n = CLASSID p = delimited (LPAREN,params,RPAREN)  blo=bloc
-  {{nom= n;para=p;over=false;typ=None;blocf= blo}}
+  */
+   DEF n = CLASSID p = delimited (LPAREN,params,RPAREN)  blo=bloc
+  {{nom= n;para=p;bloc= blo}}
   
 
 instruction :

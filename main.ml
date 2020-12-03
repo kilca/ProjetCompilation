@@ -10,21 +10,15 @@ let parse_with_error lexbuf file_in chan =
   in
   try
     let ld, e = TpParse.prog TpLex.token lexbuf in
-    (* Dans ce TP d'initiation on réalise à la fois l'impression des AST,
-     * une version sous forme d'interprète et une version sous forme d'un
-     * compilateur pour la machine virtuelle utilisee pou le projet.
-     *
-     * A noter qu'il manque une phase de Verifications Contextuelles dans
-     * laquelle on pourrait vérifier en préalable à l'évaluation et à la
-     * compilation que les expressions ne font pas références a des variables
-     * inconnues et qu'une variable n'est bien définie qu'une fois.
-     * A faire en exercice !
-     *)
+    (*
     List.iter (fun d -> Print.printDecl d) ld;
     Print.printExpr e; print_newline ();
     print_string "Evaluation finale: "; print_int (Eval.eval ld e);
     print_newline ();
-    Compil.compile ld e chan;
+    *)
+    print_string("test")
+    (* Compil.compile ld e chan; *)
+    
   with
     TpParse.Error ->
     Printf.fprintf stderr "Syntax error at position %a\n" print_position lexbuf;
