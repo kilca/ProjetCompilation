@@ -74,7 +74,7 @@ type classBloc ={
 type classDecl = {
   nom : string;
   para : paramDecl;
-  ext : defType option;(*attention !!! optionnel*)
+  ext : string;(*attention !!! optionnel*)
   cbl : classBloc;
   }
 

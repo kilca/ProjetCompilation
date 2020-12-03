@@ -25,7 +25,6 @@ let _ =
       "def", DEF;
       "object", OBJECT;
       "override", OVERRIDE;
-      "result", RESULT;
       "as", AS;
       "new", NEW;
     ]

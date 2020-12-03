@@ -101,10 +101,11 @@ bexpr : (*bool expr du if *)
     g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, bexpr, RPAREN) { e }
 
-class_declaration :
-    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) o=option(EXTENDS) ex=CLASSID c=class_bloc 
-    {{nom=n;para=p;ext=o;cbl=c}}
+opt_ext: EXTENDS e=CLASSID{e}
 
+class_declaration :
+    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) ex=option(opt_ext) c=class_bloc 
+    {{nom=n;para=p;ext=ex;cbl=c}}
 
 class_bloc: (*bloc de la classe *)
   IS LACCO ld =list(declaration) con=con_declaration func=list(fun_declaration) RACCO 
@@ -114,12 +115,12 @@ objet_declaration:
     OBJECT n=ID IS LACCO ld =list(declaration) func=list(fun_declaration) RACCO 
     {{nom=n;dec =ld;fon=func}}
 
+opt_overr : OVERRIDE n=ID {n}
+opt_type : COLON ty=DEFTYPE {ty}
+
 fun_declaration :
   DEF ov=boption(opt_overr) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
   {{nom= n;para=p;typ=o;over=ov;blocf= blo;}}
-
-opt_overr : OVERRIDE n=ID {n}
-opt_type : COLON ty=DEFTYPE {ty}
 
 (*a modifier (ai juste enleve les erreurs)*)
 con_declaration : 
