@@ -13,8 +13,6 @@ open Ast
 %token OBJECT
 %token DEF
 
-
-
 %token IF THEN ELSE
 
 %token CLASS EXTENDS IS
@@ -65,8 +63,8 @@ classeobj :
   | x = objet_declaration {Objet(x)}
 
 declaration_init :
-ASSIGN e = expr {e}
-| ASSIGN NEW e = expr {e}
+ASSIGN e = expr {VarInit(e)}
+| ASSIGN NEW i=ID param=delimited(LPAREN,exprList,RPAREN) {ClassInit(i,param)}
 
 (*ne pas def %type ici *)
 bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO {ld, l}
@@ -93,12 +91,21 @@ expr:
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, expr, RPAREN)            { e }
   | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
+  (*| s=selexpr {s}*)
   | e= expr DOT i=ID {Selec(e,i)}
   | x=ID DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
   | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (x,i,param) } 
 (*probleme avec cas call cast entre parenthese*)
 
-(*
+(* a voir si utile (pourrait si partie gauche est id)
+selexpr:
+e= expr DOT i=ID {Selec(e,i)}
+|e=selexpr DOT i=ID {Selec(e,i)}
+*)
+
+
+
+(* plus besoin (cf sujet)
 bexpr : 
     g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, bexpr, RPAREN) { e }
@@ -123,7 +130,9 @@ opt_type : COLON ty=DEFTYPE {ty}
 
 fun_declaration :
   DEF ov=boption(opt_overr) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
-  {{nom= n;para=p;typ=o;over=ov;blocf= blo;}}
+  {{nom= n;para=p;typ=o;over=ov;corp= blo;}}
+  | DEF ov=boption(opt_overr) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) ASSIGN i=instruction
+  {{nom= n;para=p;typ=o;over=ov;corp= i;}}
 
 (*a modifier (ai juste enleve les erreurs)*)
 con_declaration : 

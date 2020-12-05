@@ -32,12 +32,19 @@ type expType =
 
 (* Modifications *)
 
+(*initialisation de variable*)
+type declInit =
+ VarInit of expType (*si variable pas objet*)
+ |ClassInit of string*expType list (*si variable objet*)
+
 type decl = {
     lhs: string;
     typ: defType; (*string ou defType ?*)
     isVar: bool;
-    rhs: expType option;(*attention !!!! optionnel ou potentiellement Null*)
+    rhs: declInit option;(*attention !!!! optionnel ou potentiellement Null*)
   }
+  
+
 
 type paramDecl = decl list
 
@@ -65,7 +72,7 @@ type funDecl={
   typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
   (*argType : expType list option; liste d'argument du constructeur parent*)
   over : bool;
-  blocf : blocType;
+  corp : instr;
 }
 
 type classBloc ={
