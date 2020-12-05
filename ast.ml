@@ -26,7 +26,7 @@ type expType =
 | Comp of opComp*expType*expType
 (*| Ite of expType*expType*expType*)
 | Cast of string*expType
-| Fun of string*expType list (*appel de la fonction/Class*)
+| Selec of expType*string (*recuperation d'attribut*)
 | Call of string*string*expType list
 | None (*A voir si on garde ou pas, chances que non*)
 

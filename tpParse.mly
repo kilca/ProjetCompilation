@@ -5,6 +5,7 @@ open Ast
 %token <string> ID
 %token <string> CLASSID
 %token <int> CSTE
+
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV
 %token LPAREN RPAREN SEMICOLON
@@ -35,11 +36,12 @@ open Ast
 
 //%left RETURN
 //%right ELSE
-//%left DOT 				/*je trouve la regle mal ecrite*/
+%nonassoc RELOP
+%left DOT 				/*je trouve la regle mal ecrite*/
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
-//%right COLON
+(* %right COLON *)
 						/*reste un conflit mais je trouve pas comment le resoudre*/
 
 
@@ -88,11 +90,12 @@ expr:
   | g = expr DIV d = expr         { Div (g, d) }
   | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
+  | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, expr, RPAREN)            { e }
   | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
+  | e= expr DOT i=ID {Selec(e,i)}
   | x=ID DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
   | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (x,i,param) } 
-  (* Objet.func() attention peut amener erreur*)
 (*probleme avec cas call cast entre parenthese*)
 
 (*
