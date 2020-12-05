@@ -125,13 +125,12 @@ objet_declaration:
     OBJECT n=ID IS LACCO ld =list(declaration) func=list(fun_declaration) RACCO 
     {{nom=n;dec =ld;fon=func}}
 
-opt_overr : OVERRIDE n=ID {n}
 opt_type : COLON ty=DEFTYPE {ty}
 
 fun_declaration :
-  DEF ov=boption(opt_overr) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
+  DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
   {{nom= n;para=p;typ=o;over=ov;corp= blo;}}
-  | DEF ov=boption(opt_overr) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) ASSIGN i=instruction
+  | DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) ASSIGN i=instruction
   {{nom= n;para=p;typ=o;over=ov;corp= i;}}
 
 (*a modifier (ai juste enleve les erreurs)*)
