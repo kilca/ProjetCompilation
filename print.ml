@@ -39,6 +39,12 @@ let rec printExpr e =
 
 
 
+
+let printInit x=
+match x with
+|VarInit a-> printExpr a;
+|ClassInit (a,b)-> print_string " NEW (";List.iter (fun d -> printExpr d;print_string ",") b;print_string ")"
+
 let printDecl d = 
 
    
@@ -46,8 +52,7 @@ let printDecl d =
   print_string ":"; 
   print_string d.typ;
   match d.rhs with
-  | Some x -> print_string " :=";
-  printExpr x;
+  | Some x -> print_string " :="; printInit x;
    | None -> ();
   
 

@@ -35,7 +35,7 @@ open Ast
 //%left RETURN
 //%right ELSE
 %nonassoc RELOP
-%left DOT 				/*je trouve la regle mal ecrite*/
+/*%left DOT Etrange pas besoin de preciser */
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
@@ -44,7 +44,8 @@ open Ast
 
 
 %type <classObjDecl> classeobj 
-%type <expType> expr declaration_init
+%type <expType> expr
+%type <declInit> declaration_init
 %type <decl> declaration
 %type <decl list> params
 %type <expType list> exprList
@@ -91,17 +92,16 @@ expr:
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, expr, RPAREN)            { e }
   | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
-  (*| s=selexpr {s}*)
-  | e= expr DOT i=ID {Selec(e,i)}
+  | s=selexpr {s}
+  (*| e= expr DOT i=ID {Selec(e,i)}*)
   | x=ID DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
   | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (x,i,param) } 
 (*probleme avec cas call cast entre parenthese*)
 
-(* a voir si utile (pourrait si partie gauche est id)
 selexpr:
-e= expr DOT i=ID {Selec(e,i)}
+e= ID DOT i=ID {Selec(Id(e),i)}
 |e=selexpr DOT i=ID {Selec(e,i)}
-*)
+
 
 
 
@@ -129,7 +129,7 @@ opt_type : COLON ty=DEFTYPE {ty}
 
 fun_declaration :
   DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
-  {{nom= n;para=p;typ=o;over=ov;corp= blo;}}
+  {{nom= n;para=p;typ=o;over=ov;corp= Bloc (blo);}}
   | DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) ASSIGN i=instruction
   {{nom= n;para=p;typ=o;over=ov;corp= i;}}
 
