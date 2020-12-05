@@ -3,10 +3,15 @@ type opComp =
 
 
 (*A supprimer ?*)
+
+type defType=string
+
+(*
 type defType=
   Integer
   |String
-  |Function of string (*Id de fonction ou classe*)
+  |Function of string
+  *) (*Id de fonction ou classe*)
 
 
 type expType =
@@ -19,7 +24,7 @@ type expType =
 | Div of expType*expType
 | UMinus of expType
 | Comp of opComp*expType*expType
-| Ite of expType*expType*expType
+(*| Ite of expType*expType*expType*)
 | Cast of string*expType
 | Fun of string*expType list (*appel de la fonction/Class*)
 | Call of string*string*expType list
@@ -46,6 +51,7 @@ instr =
 | Return of expType
 | Ite of expType*instr*instr
 | Assign of string*expType
+
 
 type consDecl={
   nom : string;

@@ -10,6 +10,7 @@ let parse_with_error lexbuf file_in chan =
   in
   try
     let ld, e = TpParse.prog TpLex.token lexbuf in
+    
     (*
     List.iter (fun d -> Print.printDecl d) ld;
     Print.printExpr e; print_newline ();

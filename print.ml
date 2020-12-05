@@ -4,10 +4,11 @@ open Ast
     * ce qu'on puisse facilement verifier si les précédences et associativités
     * demandées sont bien respectées.
     *)
-let rec printExpr e = "TEST"
-   (*
+
+let rec printExpr e =
   match e with
       Id s -> print_string s
+   | ClassID s -> print_string s
     | Cste i -> print_int i
     | Plus(g, d) ->
        print_string "["; printExpr g; print_string " + ";
@@ -25,14 +26,30 @@ let rec printExpr e = "TEST"
     | Comp(op, g, d) ->
        print_string "["; printExpr g;
        print_string (Misc.string_of_relop op); printExpr d; print_string "]"
-    | Ite (si, alors, sinon) ->
-     print_string " IF "; printExpr si;
-     print_string " THEN "; printExpr alors;
-     print_string " ELSE "; printExpr sinon;
-     print_endline "]"
-     *)
+    | Cast (s,e) ->
+      print_string "["; printExpr e; print_string " As ";
+      print_string s; print_string "]"
+   | Call (s,l,e) -> 
+         print_string "[";print_string s; print_string (".");
+         print_string l;print_string "(";
+         List.iter (fun d -> printExpr d;print_string ",") e;
+         print_string ")]"
+   |None -> print_string "";
+    | _ -> print_string ""
+
+
 
 let printDecl d = 
-  print_string d.lhs; print_string " := "; (*printExpr d.rhs;*)
-  print_newline ();
+
+   
+  print_string d.lhs;
+  print_string ":"; 
+  print_string d.typ;
+  match d.rhs with
+  | Some x -> print_string " :=";
+  printExpr x;
+   | None -> ();
+  
+
+   print_newline ();
 ;;

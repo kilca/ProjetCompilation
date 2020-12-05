@@ -44,7 +44,7 @@ open Ast
 
 
 %type <classObjDecl> classeobj 
-%type <expType> expr bexpr declaration_init
+%type <expType> expr declaration_init
 %type <decl> declaration
 %type <decl list> params
 %type <expType list> exprList
@@ -70,10 +70,8 @@ ASSIGN e = expr {e}
 bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO {ld, l}
 
 declaration : 
-  x = ID COLON ty=DEFTYPE e = option(declaration_init) SEMICOLON
-  { { lhs = x;typ=ty;isVar=false; rhs = e; } }
-  | VAR x = ID COLON ty=DEFTYPE e = option(declaration_init) SEMICOLON
-  { { lhs = x;typ=ty;isVar=true; rhs = e; } }
+  b=boption(VAR) x = ID COLON ty=DEFTYPE e = option(declaration_init) SEMICOLON
+  { { lhs = x;typ=ty;isVar=b; rhs = e; } }
 
 
 exprList:
@@ -97,9 +95,11 @@ expr:
   (* Objet.func() attention peut amener erreur*)
 (*probleme avec cas call cast entre parenthese*)
 
-bexpr : (*bool expr du if *)
+(*
+bexpr : 
     g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, bexpr, RPAREN) { e }
+*)
 
 opt_ext: EXTENDS e=CLASSID{e}
 
@@ -137,7 +137,7 @@ instruction :
   | x = bloc {Bloc (x)}
   |RETURN x = expr SEMICOLON {Return(x)}
   |g = ID ASSIGN d = expr SEMICOLON  {Assign(g,d)}
-  |IF a = bexpr THEN b = instruction ELSE c = instruction
+  |IF a = expr THEN b = instruction ELSE c = instruction
    {Ite(a,b,c)}
 
 params: (*definition des parametres *)
