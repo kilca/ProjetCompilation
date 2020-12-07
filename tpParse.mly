@@ -19,7 +19,7 @@ open Ast
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
-%token <string>DEFTYPE
+%token <Ast.defType>DEFTYPE
 %token COLON
 %token NEW
 %token RETURN (*A VOIR SI Existe*)
@@ -29,26 +29,22 @@ open Ast
 * L'analyseur lexical ne renvoie jamais ce token !
 */
 %token UMINUS
-%token UPLUS
 
 %token EOF
 
-/*%left RETURN */
-/*%right ELSE */
+//%left RETURN
+//%right ELSE
 %nonassoc RELOP
-%left DOT
-/* %left COMMA */
+/*%left DOT Etrange pas besoin de preciser */
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
-%left UPLUS
-
 (* %right COLON *)
 						/*reste un conflit mais je trouve pas comment le resoudre*/
 
 
 %type <classObjDecl> classeobj 
-%type <expType> expr
+%type <expType> expr expr2
 %type <declInit> declaration_init
 %type <decl> declaration
 %type <decl list> params
@@ -56,6 +52,9 @@ open Ast
 %type <classDecl> class_declaration
 %type <objetDecl> objet_declaration
 %type <funDecl> fun_declaration
+%type <consDecl> con_declaration
+(*%type <superO> superr*)
+%type <blocType> bloc
 
 %start<Ast.progType> prog
 %%
@@ -84,6 +83,10 @@ exprList:
   | e=expr COMMA s=exprList {e::s}
   |{[]}
 
+
+expr2 :
+x = ID {Id x}
+
 expr:
     x = ID                        { Id x }
   | v = CSTE                      { Cste v }
@@ -91,22 +94,21 @@ expr:
   | g = expr MINUS d = expr       { Minus (g, d) }
   | g = expr TIMES d = expr       { Times (g, d) }
   | g = expr DIV d = expr         { Div (g, d) }
-  | PLUS e = expr  %prec UPLUS           {UPlus e }
+  | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, expr, RPAREN)            { e }
-  | LPAREN AS x=CLASSID COLON e=expr RPAREN { Cast (x, e) }
-  (*| s=selexpr {s}*)
-  | e= expr DOT i=ID {Selec(e,i)}
+  | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
+  | s=selexpr {s}
+  (*| e= expr DOT i=ID {Selec(e,i)}*)
   | x=ID DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
   | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (x,i,param) } 
 (*probleme avec cas call cast entre parenthese*)
 
-(*
 selexpr:
 e= ID DOT i=ID {Selec(Id(e),i)}
 |e=selexpr DOT i=ID {Selec(e,i)}
-*)
+
 
 
 
@@ -139,14 +141,13 @@ fun_declaration :
   {{nom= n;para=p;typ=o;over=ov;corp= i;}}
 
 (*a modifier (ai juste enleve les erreurs)*)
-con_declaration : 
-/*
-   DEF n = CLASSID p = delimited (LPAREN,params,RPAREN) COLON i=ID p2=delimited(LPAREN,params,RPAREN) IS blo=bloc
-    {{nom= n;para=p;over=false;typ=None;blocf= blo}}
-  */
-   DEF n = CLASSID p = delimited (LPAREN,params,RPAREN)  blo=bloc
-  {{nom= n;para=p;bloc= blo}}
-  
+con_declaration :
+DEF x = CLASSID a = params b = boption(superr) blo= bloc
+{{nom = x;para = a; superrr = b; bloc = blo}}
+
+superr :
+COLON y = expr2 p = params {{ex = y ; para = p}}
+ 
 
 instruction :
   x = expr SEMICOLON { Expr(x) }
