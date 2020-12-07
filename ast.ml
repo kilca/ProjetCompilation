@@ -1,10 +1,7 @@
 type opComp =
   Eq | Neq | Lt | Le | Gt | Ge
 
-
-(*A supprimer ?*)
-
-type defType=string
+(*Normalement type de retour est string *)
 
 (*
 type defType=
@@ -23,12 +20,12 @@ type expType =
 | Times of expType*expType
 | Div of expType*expType
 | UMinus of expType
+| UPlus of expType
 | Comp of opComp*expType*expType
 (*| Ite of expType*expType*expType*)
 | Cast of string*expType
 | Selec of expType*string (*recuperation d'attribut*)
 | Call of string*string*expType list
-| None (*A voir si on garde ou pas, chances que non*)
 
 (* Modifications *)
 
@@ -39,7 +36,7 @@ type declInit =
 
 type decl = {
     lhs: string;
-    typ: defType; (*string ou defType ?*)
+    typ: string; (*string ou defType ?*)
     isVar: bool;
     rhs: declInit option;(*attention !!!! optionnel ou potentiellement Null*)
   }
@@ -69,7 +66,7 @@ type consDecl={
 type funDecl={
   nom : string;
   para: paramDecl;
-  typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
+  typ : string option; (*type de retour*) (*attention !!!! optionnel*)
   (*argType : expType list option; liste d'argument du constructeur parent*)
   over : bool;
   corp : instr;

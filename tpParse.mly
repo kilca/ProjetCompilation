@@ -19,7 +19,7 @@ open Ast
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
-%token <Ast.defType>DEFTYPE
+%token <string>DEFTYPE
 %token COLON
 %token NEW
 %token RETURN (*A VOIR SI Existe*)
@@ -29,16 +29,20 @@ open Ast
 * L'analyseur lexical ne renvoie jamais ce token !
 */
 %token UMINUS
+%token UPLUS
 
 %token EOF
 
-//%left RETURN
-//%right ELSE
+/*%left RETURN */
+/*%right ELSE */
 %nonassoc RELOP
-/*%left DOT Etrange pas besoin de preciser */
+%left DOT
+/* %left COMMA */
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %left UMINUS            /* highest precedence */
+%left UPLUS
+
 (* %right COLON *)
 						/*reste un conflit mais je trouve pas comment le resoudre*/
 
@@ -87,21 +91,22 @@ expr:
   | g = expr MINUS d = expr       { Minus (g, d) }
   | g = expr TIMES d = expr       { Times (g, d) }
   | g = expr DIV d = expr         { Div (g, d) }
-  | PLUS e = expr                 { e }
+  | PLUS e = expr  %prec UPLUS           {UPlus e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, expr, RPAREN)            { e }
-  | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
-  | s=selexpr {s}
-  (*| e= expr DOT i=ID {Selec(e,i)}*)
+  | LPAREN AS x=CLASSID COLON e=expr RPAREN { Cast (x, e) }
+  (*| s=selexpr {s}*)
+  | e= expr DOT i=ID {Selec(e,i)}
   | x=ID DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
   | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (x,i,param) } 
 (*probleme avec cas call cast entre parenthese*)
 
+(*
 selexpr:
 e= ID DOT i=ID {Selec(Id(e),i)}
 |e=selexpr DOT i=ID {Selec(e,i)}
-
+*)
 
 
 
