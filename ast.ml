@@ -6,10 +6,6 @@ type const=
   Int of int
 | String of string
 
-type const = 
-  Int of int
-| String of string
-
 
 type expType =
   Id of string
@@ -59,7 +55,7 @@ instr =
 
 
 type superO ={
-  ex : expType;
+  ex : string;
   para : paramDecl;
 }
 

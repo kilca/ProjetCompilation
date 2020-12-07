@@ -1,0 +1,7 @@
+class A() is {
+   var v : Integer;
+   def A() is { v := 1; }
+}
+{
+	2+2;
+}

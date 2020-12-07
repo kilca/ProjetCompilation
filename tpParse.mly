@@ -46,7 +46,7 @@ open Ast
 
 
 %type <classObjDecl> classeobj 
-%type <expType> expr expr2
+%type <expType> expr
 %type <declInit> declaration_init
 %type <decl> declaration
 %type <decl list> params
@@ -84,10 +84,6 @@ exprList:
   e= expr {[e]}
   | e=expr COMMA s=exprList {e::s}
   |{[]}
-
-
-expr2 :
-x = ID {Id x}
 
 expr:
     x = ID                        { Id x }
@@ -133,7 +129,7 @@ DEF x = CLASSID a = params b = option(superr) blo= bloc
 {{nom = x;para = a; superrr = b; bloc = blo}}
 
 superr :
-COLON y = expr2 p = params {{ex = y ; para = p}}
+COLON y = CLASSID p = delimited(LPAREN,params,RPAREN) {{ex = y ; para = p}}
  
 
 instruction :
