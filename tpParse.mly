@@ -30,8 +30,6 @@ open Ast
 */
 %token UMINUS
 
-/*%token UPLUS*/
-
 %token EOF
 
 /*
@@ -43,7 +41,6 @@ open Ast
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */ 
 %left UMINUS            /* highest precedence */
-(*%left UPLUS *)
 (* %right COLON *)
 						/*reste un conflit mais je trouve pas comment le resoudre*/
 
@@ -101,7 +98,6 @@ expr:
   | g = expr DIV d = expr         { Div (g, d) }
   | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
-  (*| PLUS e = expr %prec UPLUS   { UPlus e }*)
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, expr, RPAREN)            { e }
   | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }

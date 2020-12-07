@@ -1,9 +1,9 @@
 {
 	val:Integer :=1;
 	is
-	val = val+1
-	if (val ==2) then 
-	val = 10
+	val := val+1;
+	if (val =2) then 
+	val := 10;
 	else
-	val = -1 /* attention ici */
+	val := -1; /* attention ici */
 }
