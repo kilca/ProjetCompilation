@@ -15,6 +15,7 @@ type expType =
 | Minus of expType*expType
 | Times of expType*expType
 | Div of expType*expType
+| And of expType*expType
 | UMinus of expType
 | UPlus of expType
 | Comp of opComp*expType*expType
