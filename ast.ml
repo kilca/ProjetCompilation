@@ -13,11 +13,15 @@ type defType=
   |Function of string
   *) (*Id de fonction ou classe*)
 
+type const = 
+  Int of int
+| String of string
+
 
 type expType =
   Id of string
 | ClassID of string
-| Cste of int
+| Cste of const
 | Plus of expType*expType
 | Minus of expType*expType
 | Times of expType*expType

@@ -4,7 +4,7 @@ open Ast
 %}
 %token <string> ID
 %token <string> CLASSID
-%token <int> CSTE
+%token <Ast.const> CSTE
 
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV

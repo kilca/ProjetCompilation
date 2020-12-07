@@ -61,35 +61,29 @@ rule
                       *)
                      comment lexbuf
                    }
-(*
+
 and
- quote content = parse
+ quote buf = parse
   "\""            { 
 
-                    token lexbuf;content
+                    CSTE (Ast.String (Buffer.contents buf));token lexbuf
                   }
   | '\n'           { 
                      failwith "end of line not allowed in a quote";
                    }
 
-  | "\\\"" as guil  { 
-                     quote (content^"\"") lexbuf
+  | "\\\""  { 
+                     Buffer.add_char buf '\"'; quote buf lexbuf
                    }
   
-  | eof            { (* detecte les commentaires non fermes pour pouvoir
-                      * faire un message d'erreur clair.
-                      * On pourrait stocker la position du dernier commentaire
-                      * encore ouvert pour ameliorer le dioagnostic
-                      *)
+  | eof            { 
                      failwith "unclosed quotation mark";
                    }
-  | _ as any              { (* rien a faire de special pour ce caractere, donc on
-                      * poursuit la reconnaissance du commentaire en cours
-                      *)
-                     quote (content^any) lexbuf 
+  | _               { 
+                     Buffer.add_string buf (Lexing.lexeme lexbuf);quote buf lexbuf 
                      
                    }
-*)
+
   and
  token = parse
       lettreMin LC * as id
@@ -117,10 +111,10 @@ and
                        token lexbuf
                     }
   | '\n'           { next_line lexbuf; token lexbuf}
-  | chiffre+ as lxm { CSTE(int_of_string lxm) }
+  | chiffre+ as lxm { CSTE (Ast.Int (int_of_string lxm)) }
   | "/*"           { comment lexbuf }
   
-  (* | "\""            { CSTE(quote "" lexbuf)} *)
+   |"\""          { quote (Buffer.create 4096) lexbuf} 
   
   | '+'            { PLUS }
   | '-'            { MINUS }
