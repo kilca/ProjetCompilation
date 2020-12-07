@@ -4,7 +4,7 @@ open Ast
 %}
 %token <string> ID
 %token <string> CLASSID
-%token <int> CSTE
+%token <Ast.const> CSTE
 
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV
@@ -19,7 +19,7 @@ open Ast
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
-%token <Ast.defType>DEFTYPE
+%token <string>DEFTYPE
 %token COLON
 %token NEW
 %token RETURN (*A VOIR SI Existe*)
@@ -30,15 +30,20 @@ open Ast
 */
 %token UMINUS
 
+/*%token UPLUS*/
+
 %token EOF
 
-//%left RETURN
-//%right ELSE
+/*
+%left RETURN
+%right ELSE
+*/
 %nonassoc RELOP
-/*%left DOT Etrange pas besoin de preciser */
+%left DOT
 %left PLUS MINUS        /* lowest precedence */
-%left TIMES DIV         /* medium precedence */
+%left TIMES DIV         /* medium precedence */ 
 %left UMINUS            /* highest precedence */
+(*%left UPLUS *)
 (* %right COLON *)
 						/*reste un conflit mais je trouve pas comment le resoudre*/
 
@@ -96,27 +101,13 @@ expr:
   | g = expr DIV d = expr         { Div (g, d) }
   | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
+  (*| PLUS e = expr %prec UPLUS   { UPlus e }*)
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   | e = delimited (LPAREN, expr, RPAREN)            { e }
   | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
-  | s=selexpr {s}
-  (*| e= expr DOT i=ID {Selec(e,i)}*)
-  | x=ID DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
-  | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (x,i,param) } 
-(*probleme avec cas call cast entre parenthese*)
-
-selexpr:
-e= ID DOT i=ID {Selec(Id(e),i)}
-|e=selexpr DOT i=ID {Selec(e,i)}
-
-
-
-
-(* plus besoin (cf sujet)
-bexpr : 
-    g = expr op = RELOP d = expr  { Comp(op, g, d) }
-  | e = delimited (LPAREN, bexpr, RPAREN) { e }
-*)
+  | e= expr DOT i=ID {Selec(e,i)}
+  | x=expr DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
+  | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (Cste(String(x)),i,param) } 
 
 opt_ext: EXTENDS e=CLASSID{e}
 
@@ -142,7 +133,7 @@ fun_declaration :
 
 (*a modifier (ai juste enleve les erreurs)*)
 con_declaration :
-DEF x = CLASSID a = params b = boption(superr) blo= bloc
+DEF x = CLASSID a = params b = option(superr) blo= bloc
 {{nom = x;para = a; superrr = b; bloc = blo}}
 
 superr :

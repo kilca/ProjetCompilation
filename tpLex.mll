@@ -117,7 +117,7 @@ and
                        token lexbuf
                     }
   | '\n'           { next_line lexbuf; token lexbuf}
-  | chiffre+ as lxm { CSTE(int_of_string lxm) }
+  | chiffre+ as lxm { CSTE(Ast.Int(int_of_string lxm)) }
   | "/*"           { comment lexbuf }
   
   (* | "\""            { CSTE(quote "" lexbuf)} *)
