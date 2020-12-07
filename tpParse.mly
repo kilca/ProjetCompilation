@@ -19,7 +19,6 @@ open Ast
 %token COMMA LACCO RACCO
 %token VAR
 %token DOT
-%token <string>DEFTYPE
 %token COLON
 %token NEW
 %token RETURN (*A VOIR SI Existe*)
@@ -46,7 +45,7 @@ open Ast
 
 
 %type <classObjDecl> classeobj 
-%type <expType> expr expr2
+%type <expType> expr
 %type <declInit> declaration_init
 %type <decl> declaration
 %type <decl list> params
@@ -74,9 +73,10 @@ ASSIGN e = expr {VarInit(e)}
 
 (*ne pas def %type ici *)
 bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO {ld, l}
+| LACCO RACCO {[],[]}
 
 declaration : 
-  b=boption(VAR) x = ID COLON ty=DEFTYPE e = option(declaration_init) SEMICOLON
+  b=boption(VAR) x = ID COLON ty=CLASSID e = option(declaration_init) SEMICOLON
   { { lhs = x;typ=ty;isVar=b; rhs = e; } }
 
 
@@ -84,10 +84,6 @@ exprList:
   e= expr {[e]}
   | e=expr COMMA s=exprList {e::s}
   |{[]}
-
-
-expr2 :
-x = ID {Id x}
 
 expr:
     x = ID                        { Id x }
@@ -108,7 +104,7 @@ expr:
 opt_ext: EXTENDS e=CLASSID{e}
 
 class_declaration :
-    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) ex=opt_ext c=class_bloc 
+    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) ex=option(opt_ext) c=class_bloc 
     {{nom=n;para=p;ext=ex;cbl=c}}
 
 class_bloc: (*bloc de la classe *)
@@ -119,7 +115,7 @@ objet_declaration:
     OBJECT n=ID IS LACCO ld =list(declaration) func=list(fun_declaration) RACCO 
     {{nom=n;dec =ld;fon=func}}
 
-opt_type : COLON ty=DEFTYPE {ty}
+opt_type : COLON ty=CLASSID {ty}
 
 fun_declaration :
   DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
@@ -129,11 +125,11 @@ fun_declaration :
 
 (*a modifier (ai juste enleve les erreurs)*)
 con_declaration :
-DEF x = CLASSID a = params b = option(superr) blo= bloc
+DEF x = CLASSID a = delimited(LPAREN,params,RPAREN) b = option(superr) IS blo= bloc
 {{nom = x;para = a; superrr = b; bloc = blo}}
 
 superr :
-COLON y = expr2 p = params {{ex = y ; para = p}}
+COLON y = CLASSID p = delimited(LPAREN,params,RPAREN) {{ex = y ; para = p}}
  
 
 instruction :

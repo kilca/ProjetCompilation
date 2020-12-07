@@ -1,0 +1,13 @@
+class A() is {
+   def A() 
+   is 
+   {
+	   is
+		2;
+
+   }
+}
+{
+	is
+	2;
+}
