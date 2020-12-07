@@ -2,16 +2,9 @@ type opComp =
   Eq | Neq | Lt | Le | Gt | Ge
 
 
-(*A supprimer ?*)
-
-type defType=string
-
-(*
-type defType=
-  Integer
-  |String
-  |Function of string
-  *) (*Id de fonction ou classe*)
+type const=
+  Int of int
+| String of string
 
 type const = 
   Int of int
@@ -27,12 +20,14 @@ type expType =
 | Times of expType*expType
 | Div of expType*expType
 | UMinus of expType
+| UPlus of expType
 | Comp of opComp*expType*expType
 (*| Ite of expType*expType*expType*)
 | Cast of string*expType
 | Selec of expType*string (*recuperation d'attribut*)
-| Call of string*string*expType list
+| Call of expType*string*expType list
 | None (*A voir si on garde ou pas, chances que non*)
+
 
 (* Modifications *)
 
@@ -43,7 +38,7 @@ type declInit =
 
 type decl = {
     lhs: string;
-    typ: defType; (*string ou defType ?*)
+    typ: string; (*string ou defType ?*)
     isVar: bool;
     rhs: declInit option;(*attention !!!! optionnel ou potentiellement Null*)
   }
@@ -53,7 +48,6 @@ type decl = {
 type paramDecl = decl list
 
 
-(*Probleme ici, ne marche pas*)
 type blocType = decl list*instr list
 and
 instr =
@@ -64,16 +58,22 @@ instr =
 | Assign of string*expType
 
 
+type superO ={
+  ex : expType;
+  para : paramDecl;
+}
+
 type consDecl={
   nom : string;
   para: paramDecl;
+  superrr : superO option;
   bloc : blocType;
 }
 
 type funDecl={
   nom : string;
   para: paramDecl;
-  typ : defType option; (*type de retour*) (*attention !!!! optionnel*)
+  typ : string option; (*type de retour*) (*attention !!!! optionnel*)
   (*argType : expType list option; liste d'argument du constructeur parent*)
   over : bool;
   corp : instr;

@@ -4,8 +4,8 @@ open Ast
     * ce qu'on puisse facilement verifier si les précédences et associativités
     * demandées sont bien respectées.
     *)
-
-(*let rec printExpr e =
+(*
+let rec printExpr e =
   match e with
       Id s -> print_string s
    | ClassID s -> print_string s
@@ -57,4 +57,5 @@ let printDecl d =
   
 
    print_newline ();
-;;*)
+;;
+*)
