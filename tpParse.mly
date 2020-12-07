@@ -1,4 +1,4 @@
-(*tpParse.mly*)
+(* tpParse.mly *)
 %{
 open Ast
 %}
@@ -8,6 +8,7 @@ open Ast
 
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV
+%token AND
 %token LPAREN RPAREN SEMICOLON
 %token ASSIGN
 %token OBJECT
@@ -21,7 +22,7 @@ open Ast
 %token DOT
 %token COLON
 %token NEW
-%token RETURN (*A VOIR SI Existe*)
+%token RETURN (* A VOIR SI Existe *)
 %token OVERRIDE
 %token AS
 /* utilise pour donner une precedence maximale au - unaire
@@ -60,7 +61,7 @@ open Ast
 %start<Ast.progType> prog
 %%
 
-(*entierete du prog avec main *)
+(* entierete du prog avec main *)
 prog:  lc=list(classeobj) b=bloc EOF {lc,b}
 
 classeobj :
@@ -71,7 +72,7 @@ declaration_init :
 ASSIGN e = expr {VarInit(e)}
 | ASSIGN NEW i=ID param=delimited(LPAREN,exprList,RPAREN) {ClassInit(i,param)}
 
-(*ne pas def %type ici *)
+(* ne pas def %type ici *)
 bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO {ld, l}
 | LACCO RACCO {[],[]}
 
@@ -88,16 +89,20 @@ exprList:
 expr:
     x = ID                        { Id x }
   | v = CSTE                      { Cste v }
+  (* OPERATEURS : *)
   | g = expr PLUS d = expr        { Plus (g, d) }
   | g = expr MINUS d = expr       { Minus (g, d) }
   | g = expr TIMES d = expr       { Times (g, d) }
   | g = expr DIV d = expr         { Div (g, d) }
   | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
+  | g = expr AND d = expr         { And (g, d) }
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
-  | e = delimited (LPAREN, expr, RPAREN)            { e }
-  | LPAREN AS x=ID COLON e=expr RPAREN { Cast (x, e) }
+  (* PARENTHESES ET AUTRES : *)
+  | LPAREN AS x=CLASSID COLON e=expr RPAREN { Cast (x, e) }
+  (*| s=selexpr {s}*)
   | e= expr DOT i=ID {Selec(e,i)}
+  | e = delimited (LPAREN, expr, RPAREN) { e }
   | x=expr DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
   | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (Cste(String(x)),i,param) } 
 
