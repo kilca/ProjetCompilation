@@ -1,2 +1,15 @@
+class A() is {
+   var v : Integer;
+   def A() is { 
+       is
+       v := 1
+       ; }
+   def h(x: Integer) 
+   : 
+   Integer 
+   := x + y
+}
 {
+ is
+ v:=1;
 }

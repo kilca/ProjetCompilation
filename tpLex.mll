@@ -128,7 +128,6 @@ and
   | ':'            { COLON }
   | ','            { COMMA }
   | "."            { DOT }
-  | '&'            { AND }
   | ":="           { ASSIGN }
   | "<"		         { RELOP (Ast.Lt) }
   | "<="           { RELOP (Ast.Le) }

@@ -1,0 +1,19 @@
+1) Le constructeur doit forcemment etre mis en premier
+
+-> resolution 2 S/R
+
+2) un bloc doit forcémment avoir un is. ne peut pas avoir seulement instruction
+
+-> resolution 2 S/R
+
+===============Problemes resolus ====================
+
+
+3) def t() := 2  -> expression
+ou def t() := 2; -> instruction
+
+-> changer instruction en instruction d'expression
+-> REGLé
+
+4) probleme parametre fonction 
+-> le probleme etait declaration -> resolu

@@ -8,7 +8,7 @@ open Ast
 
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV
-%token AND
+(*%token AND*)
 %token LPAREN RPAREN SEMICOLON
 %token ASSIGN
 %token OBJECT
@@ -73,11 +73,14 @@ ASSIGN e = expr {VarInit(e)}
 | ASSIGN NEW i=ID param=delimited(LPAREN,exprList,RPAREN) {ClassInit(i,param)}
 
 (* ne pas def %type ici *)
-bloc : LACCO ld =list(declaration) IS l = list(instruction) RACCO {ld, l}
+bloc : LACCO ld =list(declaration_instr) IS l = list(instruction) RACCO {ld, l}
 | LACCO RACCO {[],[]}
 
+declaration_instr :
+d=declaration SEMICOLON {d}
+
 declaration : 
-  b=boption(VAR) x = ID COLON ty=CLASSID e = option(declaration_init) SEMICOLON
+  b=boption(VAR) x = ID COLON ty=CLASSID e = option(declaration_init)
   { { lhs = x;typ=ty;isVar=b; rhs = e; } }
 
 
@@ -96,7 +99,7 @@ expr:
   | g = expr DIV d = expr         { Div (g, d) }
   | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
-  | g = expr AND d = expr         { And (g, d) }
+  (*| g = expr AND d = expr         { And (g, d) }*)
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   (* PARENTHESES ET AUTRES : *)
   | LPAREN AS x=CLASSID COLON e=expr RPAREN { Cast (x, e) }
@@ -113,11 +116,11 @@ class_declaration :
     {{nom=n;para=p;ext=ex;cbl=c}}
 
 class_bloc: (*bloc de la classe *)
-  IS LACCO ld =list(declaration) con=con_declaration func=list(fun_declaration) RACCO 
+  IS LACCO ld =list(declaration_instr) con=con_declaration func=list(fun_declaration) RACCO 
   {{dec=ld;cons=con;fon=func;}}
 
 objet_declaration:
-    OBJECT n=ID IS LACCO ld =list(declaration) func=list(fun_declaration) RACCO 
+    OBJECT n=ID IS LACCO ld =list(declaration_instr) func=list(fun_declaration) RACCO 
     {{nom=n;dec =ld;fon=func}}
 
 opt_type : COLON ty=CLASSID {ty}
@@ -125,8 +128,8 @@ opt_type : COLON ty=CLASSID {ty}
 fun_declaration :
   DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
   {{nom= n;para=p;typ=o;over=ov;corp= Bloc (blo);}}
-  | DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) ASSIGN i=instruction
-  {{nom= n;para=p;typ=o;over=ov;corp= i;}}
+  | DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) ASSIGN i=expr
+  {{nom= n;para=p;typ=o;over=ov;corp= Expr(i);}}
 
 (*a modifier (ai juste enleve les erreurs)*)
 con_declaration :
