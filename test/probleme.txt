@@ -1,10 +1,12 @@
 1) Le constructeur doit forcemment etre mis en premier
 
--> resolution 2 S/R
+-> faire liste de soit constructeur soit fonctions et verifier un seul en VC
 
 2) un bloc doit forcémment avoir un is. ne peut pas avoir seulement instruction
 
--> resolution 2 S/R
+-> resolution 1 S/R
+
+utiliser s'il le faut separated_list
 
 ===============Problemes resolus ====================
 

@@ -73,8 +73,9 @@ ASSIGN e = expr {VarInit(e)}
 | ASSIGN NEW i=ID param=delimited(LPAREN,exprList,RPAREN) {ClassInit(i,param)}
 
 (* ne pas def %type ici *)
-bloc : LACCO ld =list(declaration_instr) IS l = list(instruction) RACCO {ld, l}
-| LACCO RACCO {[],[]}
+bloc : LACCO ld =nonempty_list(declaration_instr) IS l = nonempty_list(instruction) RACCO {ld, l}
+(*| LACCO RACCO {[],[]}*)
+| LACCO l = list(instruction) RACCO {[], l}
 
 declaration_instr :
 d=declaration SEMICOLON {d}
@@ -148,6 +149,7 @@ instruction :
   |IF a = expr THEN b = instruction ELSE c = instruction
    {Ite(a,b,c)}
 
+(*peut etre remplace par separated list *)
 params: (*definition des parametres *)
   d=declaration {[d]}
   |{[]}
