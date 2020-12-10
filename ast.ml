@@ -23,6 +23,7 @@ type expType =
 | Cast of string*expType
 | Selec of expType*string (*recuperation d'attribut*)
 | Call of expType*string*expType list
+| Inst of string*expType list
 | None (*A voir si on garde ou pas, chances que non*)
 
 
@@ -37,7 +38,7 @@ type decl = {
     lhs: string;
     typ: string; (*string ou defType ?*)
     isVar: bool;
-    rhs: declInit option;(*attention !!!! optionnel ou potentiellement Null*)
+    rhs: expType option;(*attention !!!! optionnel ou potentiellement Null*)
   }
   
 
@@ -52,12 +53,12 @@ instr =
 | Bloc of blocType
 | Return of expType
 | Ite of expType*instr*instr
-| Assign of string*expType
+| Assign of expType*expType
 
 
 type superO ={
   ex : string;
-  para : paramDecl;
+  para : expType list;
 }
 
 type consDecl={
@@ -76,11 +77,14 @@ type funDecl={
   corp : instr;
 }
 
+type confun =
+ Fun of funDecl
+| Con of consDecl
+
+
 type classBloc ={
   dec : decl list;
-  cons : consDecl;
-  fon : funDecl list;
-
+  fon : confun list;
 }
 
 

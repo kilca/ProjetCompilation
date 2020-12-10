@@ -1,13 +1,5 @@
-class A() is {
-   def A() 
-   is 
-   {
-	   is
-		2;
-
-   }
-}
 {
-	is
-	2;
+    test : String := "test";
+is
+2+2;
 }

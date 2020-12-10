@@ -47,10 +47,14 @@ open Ast
 
 %type <classObjDecl> classeobj 
 %type <expType> expr
+(*
 %type <declInit> declaration_init
+*)
 %type <decl> declaration
+(*
 %type <decl list> params
 %type <expType list> exprList
+*)
 %type <classDecl> class_declaration
 %type <objetDecl> objet_declaration
 %type <funDecl> fun_declaration
@@ -68,27 +72,27 @@ classeobj :
   x = class_declaration {Class(x)}
   | x = objet_declaration {Objet(x)}
 
-declaration_init :
-ASSIGN e = expr {VarInit(e)}
-| ASSIGN NEW i=ID param=delimited(LPAREN,exprList,RPAREN) {ClassInit(i,param)}
 
-(* ne pas def %type ici *)
-bloc : LACCO ld =nonempty_list(declaration_instr) IS l = nonempty_list(instruction) RACCO {ld, l}
-(*| LACCO RACCO {[],[]}*)
-| LACCO l = list(instruction) RACCO {[], l}
+declaration_init :
+ASSIGN e = expr {e}
+
+
+(* ne sais pas entre list instr et list decl lorsque ID *)
+bloc :
+ LACCO l = list(instruction) RACCO {[], l}
+ | LACCO ld =nonempty_list(variable) IS l = nonempty_list(instruction) RACCO {ld, l}
 
 declaration_instr :
 d=declaration SEMICOLON {d}
 
+
+variable :
+  x = ID COLON ty=CLASSID e = option(declaration_init) SEMICOLON
+  { { lhs = x;typ=ty;isVar=false; rhs = e; } }
+
 declaration : 
   b=boption(VAR) x = ID COLON ty=CLASSID e = option(declaration_init)
   { { lhs = x;typ=ty;isVar=b; rhs = e; } }
-
-
-exprList:
-  e= expr {[e]}
-  | e=expr COMMA s=exprList {e::s}
-  |{[]}
 
 expr:
     x = ID                        { Id x }
@@ -107,50 +111,58 @@ expr:
   (*| s=selexpr {s}*)
   | e= expr DOT i=ID {Selec(e,i)}
   | e = delimited (LPAREN, expr, RPAREN) { e }
-  | x=expr DOT i=ID param=delimited(LPAREN,exprList,RPAREN) { Call (x,i,param) }
-  | x=CLASSID DOT i=ID param=delimited(LPAREN,exprList,RPAREN)   { Call (Cste(String(x)),i,param) } 
+  | x=expr DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN) { Call (x,i,param) }
+  | x=CLASSID DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN)   { Call (Cste(String(x)),i,param) } (* ou plutot Cste->ID ? *)
+  | NEW i=CLASSID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN) {Inst(i,param)}
 
 opt_ext: EXTENDS e=CLASSID{e}
 
 class_declaration :
-    CLASS n=CLASSID p = delimited (LPAREN,params,RPAREN) ex=option(opt_ext) c=class_bloc 
+    CLASS n=CLASSID p = delimited (LPAREN,separated_list(COMMA,declaration),RPAREN) ex=option(opt_ext) c=class_bloc 
     {{nom=n;para=p;ext=ex;cbl=c}}
 
+confun:
+ x =con_declaration {Con(x)}
+| x = fun_declaration {Fun (x)}
+
 class_bloc: (*bloc de la classe *)
-  IS LACCO ld =list(declaration_instr) con=con_declaration func=list(fun_declaration) RACCO 
-  {{dec=ld;cons=con;fon=func;}}
+  IS LACCO ld =list(declaration_instr) func=list(confun) RACCO 
+  {{dec=ld;fon=func}}
 
 objet_declaration:
-    OBJECT n=ID IS LACCO ld =list(declaration_instr) func=list(fun_declaration) RACCO 
+    OBJECT n=CLASSID IS LACCO ld =list(declaration_instr) func=list(fun_declaration) RACCO 
     {{nom=n;dec =ld;fon=func}}
 
 opt_type : COLON ty=CLASSID {ty}
 
 fun_declaration :
-  DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) IS blo=bloc
+  DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,separated_list(COMMA,declaration),RPAREN) o=option(opt_type) IS blo=bloc
   {{nom= n;para=p;typ=o;over=ov;corp= Bloc (blo);}}
-  | DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,params,RPAREN) o=option(opt_type) ASSIGN i=expr
+  | DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,separated_list(COMMA,declaration),RPAREN) o=option(opt_type) ASSIGN i=expr
   {{nom= n;para=p;typ=o;over=ov;corp= Expr(i);}}
 
 (*a modifier (ai juste enleve les erreurs)*)
 con_declaration :
-DEF x = CLASSID a = delimited(LPAREN,params,RPAREN) b = option(superr) IS blo= bloc
+DEF x = CLASSID a = delimited(LPAREN,separated_list(COMMA,declaration),RPAREN) b = option(superr) IS blo= bloc
 {{nom = x;para = a; superrr = b; bloc = blo}}
 
 superr :
-COLON y = CLASSID p = delimited(LPAREN,params,RPAREN) {{ex = y ; para = p}}
+COLON y = CLASSID p = delimited(LPAREN,separated_list(COMMA,expr),RPAREN) {{ex = y ; para = p}}
  
 
+(*pour assign peut etre mettre les expression toleres (genre 2:=4;)*)
 instruction :
   x = expr SEMICOLON { Expr(x) }
   | x = bloc {Bloc (x)}
   |RETURN x = expr SEMICOLON {Return(x)}
-  |g = ID ASSIGN d = expr SEMICOLON  {Assign(g,d)}
+  |g = expr ASSIGN d = expr SEMICOLON  {Assign(g,d)}
   |IF a = expr THEN b = instruction ELSE c = instruction
    {Ite(a,b,c)}
 
 (*peut etre remplace par separated list *)
-params: (*definition des parametres *)
+(*
+params:
   d=declaration {[d]}
   |{[]}
   | d=declaration COMMA p=params {d::p}
+*)

@@ -1,3 +1,8 @@
+object CptPoint is {          /* Compteur d'instances de Point */
+  var next : Integer := 0;   /* indice de la prochaine instance de Point */
+  def incr() : Integer is { this.next := this.next + 1; result := this.next; }
+  def howMany() : Integer := this.next
+}
 {
-  "test".println();
+  
 }

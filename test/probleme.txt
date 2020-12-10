@@ -1,14 +1,22 @@
+(*pour assign peut etre mettre les expression toleres (genre 2:=4;)*)
+-> techniquement pas vraiment possible hors VC
+
+probleme assignation string
+
+
+===============Problemes resolus ====================
+
 1) Le constructeur doit forcemment etre mis en premier
 
 -> faire liste de soit constructeur soit fonctions et verifier un seul en VC
+-> Reglé
 
 2) un bloc doit forcémment avoir un is. ne peut pas avoir seulement instruction
 
 -> resolution 1 S/R
-
-utiliser s'il le faut separated_list
-
-===============Problemes resolus ====================
+-> Reglé 
+utiliser s'il le faut separated_list 
+-> Reglé
 
 
 3) def t() := 2  -> expression
