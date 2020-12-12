@@ -11,12 +11,7 @@ let parse_with_error lexbuf file_in chan =
   try
     let ld, e = TpParse.prog TpLex.token lexbuf in
     
-    (*
-    List.iter (fun d -> Print.printDecl d) ld;
-    Print.printExpr e; print_newline ();
-    print_string "Evaluation finale: "; print_int (Eval.eval ld e);
-    print_newline ();
-    *)
+    Print.print_progType (ld,e);
     print_string("test")
     (* Compil.compile ld e chan; *)
     
