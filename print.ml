@@ -53,7 +53,9 @@ let rec print_expType (e : Ast.expType) =
           print_string l;print_string "(";
           List.iter (fun d -> print_expType d;print_string ",") e;
           print_string ")]"
-   | Inst (s,l) -> print_string "TODO"
+   | Inst (s,l) -> print_string "[NEW ";print_string s;
+   print_string "("; List.iter (fun d -> print_expType d;print_string ",") l; print_string ")]"
+   | Selec(e,i) -> print_expType e; print_string "."; print_string i;
     |None -> print_string "";
      | _ -> print_string ""
 ;;
@@ -84,7 +86,7 @@ and
 print_instr i= 
    print_newline ();
    match i with
-   Expr e -> print_expType e;
+   Expr e -> print_expType e
    | Bloc bl -> print_blocType bl;
    | Return e -> print_string "RETURN";print_expType e
    | Ite (e,r,t) -> print_string "ITE("; print_expType e; print_string ",";
@@ -101,7 +103,7 @@ let print_superO (s : Ast.superO)=
 ;;
   
 let print_consDecl (p : Ast.consDecl)=
-   print_string "[CONS";
+   print_string "[Constructor ";
    print_string p.nom;
    print_string " (";
    print_paramDecl p.para;
