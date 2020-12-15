@@ -19,20 +19,11 @@ type expType =
 | UMinus of expType
 | UPlus of expType
 | Comp of opComp*expType*expType
-(*| Ite of expType*expType*expType*)
 | Cast of string*expType
 | Selec of expType*string (*recuperation d'attribut*)
 | Call of expType*string*expType list
 | Inst of string*expType list
-| None (*A voir si on garde ou pas, chances que non*)
-
-
-(* Modifications *)
-
-(*initialisation de variable*)
-type declInit =
- VarInit of expType (*si variable pas objet*)
- |ClassInit of string*expType list (*si variable objet*)
+| None (**)
 
 type decl = {
     lhs: string;

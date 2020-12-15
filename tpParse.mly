@@ -22,7 +22,7 @@ open Ast
 %token DOT
 %token COLON
 %token NEW
-%token RETURN (* A VOIR SI Existe *)
+%token RETURN
 %token OVERRIDE
 %token AS
 /* utilise pour donner une precedence maximale au - unaire
@@ -32,34 +32,21 @@ open Ast
 
 %token EOF
 
-/*
-%left RETURN
-%right ELSE
-*/
 %nonassoc RELOP
 %left DOT
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */ 
 %left UMINUS            /* highest precedence */
-(* %right COLON *)
-						/*reste un conflit mais je trouve pas comment le resoudre*/
 
-
+/* il ya peut etre d'autre types type precisable mais pas besoin */
 %type <classObjDecl> classeobj 
 %type <expType> expr
-(*
-%type <declInit> declaration_init
-*)
 %type <decl> declaration
-(*
-%type <decl list> params
-%type <expType list> exprList
-*)
 %type <classDecl> class_declaration
 %type <objetDecl> objet_declaration
 %type <funDecl> fun_declaration
 %type <consDecl> con_declaration
-(*%type <superO> superr*)
+%type <superO> superr
 %type <blocType> bloc
 
 %start<Ast.progType> prog
@@ -68,32 +55,36 @@ open Ast
 (* entierete du prog avec main *)
 prog:  lc=list(classeobj) b=bloc EOF {lc,b}
 
+(*soit code classe, soit code objet *)
 classeobj :
   x = class_declaration {Class(x)}
   | x = objet_declaration {Objet(x)}
 
-
+(*initialisation de variable (le new est dans exp)*)
 declaration_init :
 ASSIGN e = expr {e}
 
 
-(* ne sais pas entre list instr et list decl lorsque ID *)
+(* bloc d'instruction *)
 bloc :
  LACCO l = list(instruction) RACCO {[], l}
  | LACCO ld =nonempty_list(variable) IS l = nonempty_list(instruction) RACCO {ld, l}
 
+
 declaration_instr :
 d=declaration SEMICOLON {d}
 
-
+(* variable defini dans bloc *)
 variable :
   x = ID COLON ty=CLASSID e = option(declaration_init) SEMICOLON
   { { lhs = x;typ=ty;isVar=false; rhs = e; } }
 
+(*variable defini dans parametre *)
 declaration : 
   b=boption(VAR) x = ID COLON ty=CLASSID e = option(declaration_init)
   { { lhs = x;typ=ty;isVar=b; rhs = e; } }
 
+(*les expressions du langage*)
 expr:
     x = ID                        { Id x }
   | v = CSTE                      { Cste v }
@@ -115,42 +106,50 @@ expr:
   | x=CLASSID DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN)   { Call (Cste(String(x)),i,param) } (* ou plutot Cste->ID ? *)
   | NEW i=CLASSID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN) {Inst(i,param)}
 
+(*le extends de classe *)
 opt_ext: EXTENDS e=CLASSID{e}
 
+(*declaration globale de classe *)
 class_declaration :
     CLASS n=CLASSID p = delimited (LPAREN,separated_list(COMMA,declaration),RPAREN) ex=option(opt_ext) c=class_bloc 
     {{nom=n;para=p;ext=ex;cbl=c}}
 
+(*soit constructeur soit fonction *)
 confun:
  x =con_declaration {Con(x)}
 | x = fun_declaration {Fun (x)}
 
+(*declaration du corp/bloc de la classe *)
 class_bloc: (*bloc de la classe *)
   IS LACCO ld =list(declaration_instr) func=list(confun) RACCO 
   {{dec=ld;fon=func}}
 
+(*declaration globale d'un objet *)
 objet_declaration:
     OBJECT n=CLASSID IS LACCO ld =list(declaration_instr) func=list(fun_declaration) RACCO 
     {{nom=n;dec =ld;fon=func}}
 
+(*definission du type de retour de fonction (optionnel)*)
 opt_type : COLON ty=CLASSID {ty}
 
+(*declaration de fonction au sein d'une classe/objet *)
 fun_declaration :
   DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,separated_list(COMMA,declaration),RPAREN) o=option(opt_type) IS blo=bloc
   {{nom= n;para=p;typ=o;over=ov;corp= Bloc (blo)}}
   | DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,separated_list(COMMA,declaration),RPAREN) o=option(opt_type) ASSIGN i=expr
   {{nom= n;para=p;typ=o;over=ov;corp= Expr(i)}}
 
-(*a modifier (ai juste enleve les erreurs)*)
+(*declaration de constructeur*)
 con_declaration :
 DEF x = CLASSID a = delimited(LPAREN,separated_list(COMMA,declaration),RPAREN) b = option(superr) IS blo= bloc
 {{nom = x;para = a; superrr = b; bloc = blo}}
 
+(*super du constructeur*)
 superr :
 COLON y = CLASSID p = delimited(LPAREN,separated_list(COMMA,expr),RPAREN) {{ex = y ; para = p}}
  
 
-(*pour assign peut etre mettre les expression toleres (genre 2:=4;)*)
+(*instructions du langage (possible de preciser + cas mais possible VC)*)
 instruction :
   x = expr SEMICOLON { Expr(x) }
   | x = bloc {Bloc (x)}
@@ -158,11 +157,3 @@ instruction :
   |g = expr ASSIGN d = expr SEMICOLON  {Assign(g,d)}
   |IF a = expr THEN b = instruction ELSE c = instruction
    {Ite(a,b,c)}
-
-(*peut etre remplace par separated list *)
-(*
-params:
-  d=declaration {[d]}
-  |{[]}
-  | d=declaration COMMA p=params {d::p}
-*)

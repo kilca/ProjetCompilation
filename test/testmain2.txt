@@ -1,5 +1,8 @@
 {
-    test : String :=  bnjour ;
+    test : String :=  "bnjour" ;
 is
 2+2;
+
+"test"
+
 }

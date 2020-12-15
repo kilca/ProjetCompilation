@@ -25,7 +25,7 @@ let print_const (p : Ast.const)=
 
 let rec print_expType (e : Ast.expType) =
    match e with
-       Id s -> print_string s
+       Id s -> print_string "ID[";print_string s;print_string "]"
     | ClassID s -> print_string s
      | Cste i -> print_const i
      | Plus(g, d) ->
@@ -70,7 +70,7 @@ let print_decl (d : Ast.decl) =
    match d.rhs with
     Some x -> print_string " :="; print_expType x;
    | None -> ();
-       print_newline ()
+   
 ;;
 
 let print_paramDecl (p : Ast.paramDecl) =
@@ -84,7 +84,6 @@ let rec print_blocType (p : Ast.blocType)=
    List.iter (fun d -> print_instr d;print_newline ()) (snd p)
 and
 print_instr i= 
-   print_newline ();
    match i with
    Expr e -> print_expType e
    | Bloc bl -> print_blocType bl;
@@ -108,6 +107,7 @@ let print_consDecl (p : Ast.consDecl)=
    print_string " (";
    print_paramDecl p.para;
    print_string " )";
+   print_newline ();
    match p.superrr with
       Some x -> print_superO x;
     | None -> ();
@@ -139,7 +139,7 @@ let print_confun (p : Ast.confun) =
 ;;
   
 let print_classBloc (p : Ast.classBloc) =
-   print_string "CLASS[";
+   print_string "[";
    List.iter (fun d -> print_decl d;print_newline ()) p.dec;
    print_newline ();
    List.iter (fun d -> print_confun d;print_newline ()) p.fon;
