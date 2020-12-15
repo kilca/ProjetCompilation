@@ -16,7 +16,7 @@ type expType =
 | Minus of expType*expType
 | Times of expType*expType
 | Div of expType*expType
-| And of expType*expType(*concat string*)
+| Concat of expType*expType
 | UMinus of expType
 | Comp of opComp*expType*expType
 | Cast of string*expType

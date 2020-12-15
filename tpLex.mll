@@ -120,6 +120,7 @@ and
   | '-'            { MINUS }
   | '*'            { TIMES }
   | '/'            { DIV }
+  | '&'            { CONCAT }
   | '('            { LPAREN }
   | ')'            { RPAREN }
   | '{'						 { LACCO }

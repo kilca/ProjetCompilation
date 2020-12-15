@@ -8,7 +8,7 @@ open Ast
 
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV
-(*%token AND*)
+%token CONCAT
 %token LPAREN RPAREN SEMICOLON
 %token ASSIGN
 %token OBJECT
@@ -37,6 +37,9 @@ open Ast
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */ 
 %left UMINUS            /* highest precedence */
+%left CONCAT            /* peu importe la precedence car n'est pas compatible avec les op de type int */
+(* %right COLON *)
+						/*reste un conflit mais je trouve pas comment le resoudre*/
 
 /* il ya peut etre d'autre types type precisable mais pas besoin */
 %type <classObjDecl> classeobj 
@@ -93,9 +96,9 @@ expr:
   | g = expr MINUS d = expr       { Minus (g, d) }
   | g = expr TIMES d = expr       { Times (g, d) }
   | g = expr DIV d = expr         { Div (g, d) }
+  | g = expr CONCAT d = expr         { Concat (g, d) }
   | PLUS e = expr                 { e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
-  (*| g = expr AND d = expr         { And (g, d) }*)
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   (* PARENTHESES ET AUTRES : *)
   | LPAREN AS x=CLASSID COLON e=expr RPAREN { Cast (x, e) }
