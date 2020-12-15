@@ -64,25 +64,23 @@ rule
 
 and
  quote buf = parse
-  "\""            { 
-
-                    CSTE (Ast.String (Buffer.contents buf));token lexbuf
-                  }
-  | '\n'           { 
+  '"'            { CSTE (Ast.String (Buffer.contents buf)) }
+  | '\\' 'n'         { 
                      failwith "end of line not allowed in a quote";
                    }
 
-  | "\\\""  { 
+  | '\\' '"'  { 
                      Buffer.add_char buf '\"'; quote buf lexbuf
                    }
   
   | eof            { 
                      failwith "unclosed quotation mark";
                    }
-  | _               { 
-                     Buffer.add_string buf (Lexing.lexeme lexbuf);quote buf lexbuf 
-                     
-                   }
+  | [^ '"' '\\']+
+    { Buffer.add_string buf (Lexing.lexeme lexbuf);
+      quote buf lexbuf
+    }
+  | _ { failwith "Illegal string character: " }
 
   and
  token = parse
@@ -113,9 +111,7 @@ and
   | '\n'           { next_line lexbuf; token lexbuf}
   | chiffre+ as lxm { CSTE (Ast.Int (int_of_string lxm)) }
   | "/*"           { comment lexbuf }
-  
-   |"\""          { quote (Buffer.create 4096) lexbuf} 
-  
+  | '"'            { quote (Buffer.create 17) lexbuf} 
   | '+'            { PLUS }
   | '-'            { MINUS }
   | '*'            { TIMES }
