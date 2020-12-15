@@ -40,7 +40,7 @@ open Ast
 
 /* il ya peut etre d'autre types type precisable mais pas besoin */
 %type <classObjDecl> classeobj 
-%type <expType> expr
+%type <expType> expr opt_expr
 %type <decl> declaration
 %type <classDecl> class_declaration
 %type <objetDecl> objet_declaration
@@ -118,11 +118,12 @@ class_declaration :
 confun:
  x =con_declaration {Con(x)}
 | x = fun_declaration {Fun (x)}
+| x = declaration_instr {Att (x)}
 
 (*declaration du corp/bloc de la classe *)
 class_bloc: (*bloc de la classe *)
-  IS LACCO ld =list(declaration_instr) func=list(confun) RACCO 
-  {{dec=ld;fon=func}}
+  IS LACCO decs=list(confun) RACCO 
+  {{dec=decs}}
 
 (*declaration globale d'un objet *)
 objet_declaration:
@@ -148,12 +149,13 @@ DEF x = CLASSID a = delimited(LPAREN,separated_list(COMMA,declaration),RPAREN) b
 superr :
 COLON y = CLASSID p = delimited(LPAREN,separated_list(COMMA,expr),RPAREN) {{ex = y ; para = p}}
  
-
+opt_expr:
+x = expr{x}
 (*instructions du langage (possible de preciser + cas mais possible VC)*)
 instruction :
   x = expr SEMICOLON { Expr(x) }
   | x = bloc {Bloc (x)}
-  |RETURN x = expr SEMICOLON {Return(x)}
+  |RETURN x=option(opt_expr) SEMICOLON {Return(x)}
   |g = expr ASSIGN d = expr SEMICOLON  {Assign(g,d)}
   |IF a = expr THEN b = instruction ELSE c = instruction
    {Ite(a,b,c)}

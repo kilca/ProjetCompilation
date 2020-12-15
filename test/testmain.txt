@@ -1,9 +1,9 @@
+class A2() extends A is {
+   var v1 : String; /* masque le champ v de la classe A */
+
+   def A2() : A() is { v := "hello"; }
+   var v2 : String; /* masque le champ v de la classe A */
+}
 {
-	val:Integer :=1;
-	is
-	val := val+1;
-	if (val =2) then 
-	val := 10;
-	else
-	val := -1; /* attention ici */
+	return;
 }

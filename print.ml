@@ -41,7 +41,6 @@ let rec print_expType (e : Ast.expType) =
         print_string "["; print_expType g; print_string " / ";
         print_expType d; print_string "]"
      | UMinus e -> print_string "[ - ";  print_expType e; print_string "]"
-     | UPlus e -> print_string "[ + ";  print_expType e; print_string "]"
      | Comp(op, g, d) ->
         print_string "["; print_expType g;
         print_string (Misc.string_of_relop op); print_expType d; print_string "]"
@@ -56,7 +55,6 @@ let rec print_expType (e : Ast.expType) =
    | Inst (s,l) -> print_string "[NEW ";print_string s;
    print_string "("; List.iter (fun d -> print_expType d;print_string ",") l; print_string ")]"
    | Selec(e,i) -> print_expType e; print_string "."; print_string i;
-    |None -> print_string "";
      | _ -> print_string ""
 ;;
 
@@ -79,15 +77,22 @@ let print_paramDecl (p : Ast.paramDecl) =
   
 let rec print_blocType (p : Ast.blocType)=
    print_string "Bloc{";
+   print_newline ();
    List.iter (fun d -> print_decl d;print_newline ()) (fst p);
    print_string "IS";
-   List.iter (fun d -> print_instr d;print_newline ()) (snd p)
+   print_newline ();
+   List.iter (fun d -> print_instr d;print_newline ()) (snd p);
+   print_string "}"
 and
 print_instr i= 
    match i with
    Expr e -> print_expType e
    | Bloc bl -> print_blocType bl;
-   | Return e -> print_string "RETURN";print_expType e
+   | Return e -> begin
+      match e with
+      Some x -> print_string "RETURN";print_expType x
+   | None -> print_string "RETURN";
+   end
    | Ite (e,r,t) -> print_string "ITE("; print_expType e; print_string ",";
    print_instr r;print_string ",";print_instr t;print_string ")"
    | Assign (e,r)-> print_expType e;print_string "=";print_expType r
@@ -109,10 +114,10 @@ let print_consDecl (p : Ast.consDecl)=
    print_string " )";
    print_newline ();
    match p.superrr with
-      Some x -> print_superO x;
-    | None -> ();
-   print_blocType p.bloc;
-   print_string "]"
+      Some x ->   print_blocType p.bloc;
+      print_string "]";
+    | None ->    print_blocType p.bloc;
+    print_string "]";
 ;;
 
 let print_funDecl (p : Ast.funDecl)=
@@ -130,19 +135,17 @@ let print_funDecl (p : Ast.funDecl)=
    print_string "]"
 ;;
 
-let print_confun (p : Ast.confun) =
-  
+let print_confun (p : Ast.membreClasse) =
    match p with
    Fun x -> print_funDecl x
    |Con x -> print_consDecl x
+   |Att x -> print_decl x
    
 ;;
   
 let print_classBloc (p : Ast.classBloc) =
    print_string "[";
-   List.iter (fun d -> print_decl d;print_newline ()) p.dec;
-   print_newline ();
-   List.iter (fun d -> print_confun d;print_newline ()) p.fon;
+   List.iter (fun d -> print_confun d;print_newline ()) p.dec;
    print_newline ();
    print_string "]"
 ;;
@@ -156,10 +159,12 @@ let print_classDecl (p : classDecl) =
    print_string " )";
    match p.ext with
     Some x -> print_string "EXTENDS ";print_string x;
-   | None -> ();
-   print_newline ();
+    print_newline ();
+    print_classBloc p.cbl;
+    print_string "]"
+   | None -> print_newline ();
    print_classBloc p.cbl;
-   print_string "]"
+   print_string "]";
 ;;
   
 let print_objetDecl p =
