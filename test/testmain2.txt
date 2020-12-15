@@ -1,8 +1,7 @@
 {
-    test : String :=  "bnjour" ;
+    test : String :=  "te    st\nbjr" ;
 is
 2+2;
 
-"test"
 
 }

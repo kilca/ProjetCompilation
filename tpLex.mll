@@ -65,9 +65,13 @@ rule
 and
  quote buf = parse
   '"'            { CSTE (Ast.String (Buffer.contents buf)) }
-  | '\\' 'n'         { 
-                     failwith "end of line not allowed in a quote";
+  | '\n'   { 
+                    failwith "end of line not allowed"
                    }
+  | '\\' 'n'         { 
+                     Buffer.add_char buf '\n'; quote buf lexbuf
+                   }
+  | '\r'  { failwith "end of line not allowed" }
 
   | '\\' '"'  { 
                      Buffer.add_char buf '\"'; quote buf lexbuf
@@ -76,7 +80,7 @@ and
   | eof            { 
                      failwith "unclosed quotation mark";
                    }
-  | [^ '"' '\\']+
+  | [^ '"' '\\' '\n' '\r']+
     { Buffer.add_string buf (Lexing.lexeme lexbuf);
       quote buf lexbuf
     }
