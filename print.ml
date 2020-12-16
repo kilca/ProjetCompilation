@@ -40,6 +40,9 @@ let rec print_expType (e : Ast.expType) =
      | Div (g, d) ->
         print_string "["; print_expType g; print_string " / ";
         print_expType d; print_string "]"
+        | Concat (g, d) ->
+        print_string "["; print_expType g; print_string " & ";
+        print_expType d; print_string "]"
      | UMinus e -> print_string "[ - ";  print_expType e; print_string "]"
      | Comp(op, g, d) ->
         print_string "["; print_expType g;

@@ -12,6 +12,7 @@ let parse_with_error lexbuf file_in chan =
     let ld, e = TpParse.prog TpLex.token lexbuf in
     
     Print.print_progType (ld,e);
+    Eval.eval ld e
     (* Compil.compile ld e chan; *)
     
   with
