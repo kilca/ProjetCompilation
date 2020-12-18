@@ -1,9 +1,0 @@
-class A2() extends A is {
-   var v1 : String; /* masque le champ v de la classe A */
-
-   def A2() : A() is { v := "hello"; }
-   var v2 : String; /* masque le champ v de la classe A */
-}
-{
-	return;
-}

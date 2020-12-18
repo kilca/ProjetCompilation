@@ -58,7 +58,6 @@ let rec print_expType (e : Ast.expType) =
    | Inst (s,l) -> print_string "[NEW ";print_string s;
    print_string "("; List.iter (fun d -> print_expType d;print_string ",") l; print_string ")]"
    | Selec(e,i) -> print_expType e; print_string "."; print_string i;
-     | _ -> print_string ""
 ;;
 
 
@@ -75,16 +74,16 @@ let print_decl (d : Ast.decl) =
 ;;
 
 let print_paramDecl (p : Ast.paramDecl) =
-   List.iter (fun d -> print_decl d;print_string ",") p
+   List.iter (fun d -> print_string "  ";print_decl d;print_string ",") p
 ;;
   
 let rec print_blocType (p : Ast.blocType)=
    print_string "Bloc{";
    print_newline ();
-   List.iter (fun d -> print_decl d;print_newline ()) (fst p);
+   List.iter (fun d -> print_string "  ";print_decl d;print_newline ()) (fst p);
    print_string "IS";
    print_newline ();
-   List.iter (fun d -> print_instr d;print_newline ()) (snd p);
+   List.iter (fun d -> print_string "  ";print_instr d;print_newline ()) (snd p);
    print_string "}"
 and
 print_instr i= 
@@ -93,8 +92,8 @@ print_instr i=
    | Bloc bl -> print_blocType bl;
    | Return e -> begin
       match e with
-      Some x -> print_string "RETURN";print_expType x
-   | None -> print_string "RETURN";
+      Some x -> print_string "RETURN [";print_expType x;print_string "]"
+   | None -> print_string "DefaultReturn";
    end
    | Ite (e,r,t) -> print_string "ITE("; print_expType e; print_string ",";
    print_instr r;print_string ",";print_instr t;print_string ")"
@@ -148,7 +147,7 @@ let print_confun (p : Ast.membreClasse) =
   
 let print_classBloc (p : Ast.classBloc) =
    print_string "[";
-   List.iter (fun d -> print_confun d;print_newline ()) p.dec;
+   List.iter (fun d -> print_string "  ";print_confun d;print_newline ()) p.dec;
    print_newline ();
    print_string "]"
 ;;

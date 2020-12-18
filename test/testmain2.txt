@@ -1,7 +1,0 @@
-{
-    test : String :=  "test2"&"test3" ;
-is
-2+2;
-
-
-}

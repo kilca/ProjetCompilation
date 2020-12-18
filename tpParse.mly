@@ -141,7 +141,7 @@ fun_declaration :
   DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,separated_list(COMMA,declaration),RPAREN) o=option(opt_type) IS blo=bloc
   {{nom= n;para=p;typ=o;over=ov;corp= Bloc (blo)}}
   | DEF ov=boption(OVERRIDE) n = ID p = delimited(LPAREN,separated_list(COMMA,declaration),RPAREN) o=option(opt_type) ASSIGN i=expr
-  {{nom= n;para=p;typ=o;over=ov;corp= Expr(i)}}
+  {{nom= n;para=p;typ=o;over=ov;corp= Bloc([],[Return (Some i)] ) }}
 
 (*declaration de constructeur*)
 con_declaration :

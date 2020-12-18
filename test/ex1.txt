@@ -45,9 +45,9 @@ class Point(var x: Integer, var y: Integer, var name: String) is {
 
   def print(verbose : Integer) is {
       if verbose then "Inside Point::print".println(); else { }
-      /* Exemples avec l'operateur + de concatenation de chaines */
+      /* Exemples avec l'operateur & de concatenation de chaines */
       this.name.print();
-      ( "= (" + this.x.toString() + ", " + this.y.toString() + ")" ).println();
+      ( "= (" & this.x.toString() & ", " & this.y.toString() & ")" ).println();
   }
 
   /* par defaut, on ajoute un ' au nom de l'objet. Modifiable avec setName */
@@ -56,7 +56,7 @@ class Point(var x: Integer, var y: Integer, var name: String) is {
    /* On memorise le dernier clone construit à partir de cet objet
     * si on voulait on pourrait le chainer a la fin de la liste des clones
     */
-    this.clone := new Point(this.x, this.y, this.name + "'");
+    this.clone := new Point(this.x, this.y, this.name & "'");
     result := this.clone;
   }
 
@@ -133,7 +133,7 @@ class PointColore(x: Integer, y:Integer, var coul: Couleur) extends Point is {
    def colore() : Integer := this.coul.estGris() <> 0
 
    def PointColore (x: Integer, y:Integer, var coul: Couleur)
-     : Point(x, y, "P-" + CptPoint.howMany().toString() ) is {
+     : Point(x, y, "P-" & CptPoint.howMany().toString() ) is {
      /* empty */
    }
 
@@ -260,5 +260,5 @@ is
   Test.test(p1, o, pn);
   Test.test2(o);
   Test.test2(pn);
-  "Done".println();
+  "\nDone".println();
 }
