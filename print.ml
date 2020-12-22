@@ -44,6 +44,7 @@ let rec print_expType (e : Ast.expType) =
         print_string "["; print_expType g; print_string " & ";
         print_expType d; print_string "]"
      | UMinus e -> print_string "[ - ";  print_expType e; print_string "]"
+     | UPlus e -> print_string "[ + ";  print_expType e; print_string "]"
      | Comp(op, g, d) ->
         print_string "["; print_expType g;
         print_string (Misc.string_of_relop op); print_expType d; print_string "]"

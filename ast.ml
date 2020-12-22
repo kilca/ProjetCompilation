@@ -7,6 +7,7 @@ type const=
   Int of int
 | String of string
 
+
 (*expression (2+2) *)
 type expType =
   Id of string (*commence forcemment par minuscule *)
@@ -18,6 +19,7 @@ type expType =
 | Div of expType*expType
 | Concat of expType*expType
 | UMinus of expType
+| UPlus of expType
 | Comp of opComp*expType*expType
 | Cast of string*expType
 | Selec of expType*string (*recuperation d'attribut*)

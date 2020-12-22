@@ -29,17 +29,17 @@ open Ast
 * L'analyseur lexical ne renvoie jamais ce token !
 */
 %token UMINUS
+%token UPLUS /*je trouve pas ca utile mais bon */
 
 %token EOF
 
 %nonassoc RELOP
-%left DOT
 %left PLUS MINUS        /* lowest precedence */
 %left TIMES DIV         /* medium precedence */ 
-%left UMINUS            /* highest precedence */
+%left UMINUS UPLUS           /* highest precedence */
 %left CONCAT            /* peu importe la precedence car n'est pas compatible avec les op de type int */
+%left DOT
 (* %right COLON *)
-						/*reste un conflit mais je trouve pas comment le resoudre*/
 
 /* il ya peut etre d'autre types type precisable mais pas besoin */
 %type <classObjDecl> classeobj 
@@ -97,7 +97,7 @@ expr:
   | g = expr TIMES d = expr       { Times (g, d) }
   | g = expr DIV d = expr         { Div (g, d) }
   | g = expr CONCAT d = expr         { Concat (g, d) }
-  | PLUS e = expr                 { e }
+  | PLUS e = expr %prec UPLUS       { UPlus e }
   | MINUS e = expr %prec UMINUS   { UMinus e }
   | g = expr op = RELOP d = expr  { Comp(op, g, d) }
   (* PARENTHESES ET AUTRES : *)

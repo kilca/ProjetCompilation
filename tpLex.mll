@@ -98,13 +98,10 @@ and
         with Not_found -> ID id
       }
   | lettreMaj LC * as id
-      { (* id contient le texte reconnu. On verifie s'il s'agit d'un mot-clef
-         * auquel cas on renvoie le token associe. Sinon on renvoie Id avec le
-         * texte reconnu en valeur 
+      { (* pas besoin de verifier car les mot clef
+          car les mot clef ne commencent Jamais par une majuscule  
          *)
-        try
-          Hashtbl.find keyword_table id
-        with Not_found -> CLASSID id
+        CLASSID id
       }
   | [' ''\t''\r']+  { (* consommer les delimiteurs, ne pas les transmettre
                        * et renvoyer ce que renverra un nouvel appel a
