@@ -71,6 +71,24 @@ and
   | '\\' 'n'         { 
                      Buffer.add_char buf '\n'; quote buf lexbuf
                    }
+  | '\\' 't'         { 
+                     Buffer.add_char buf '\t'; quote buf lexbuf
+                   }
+  | '\\' 'r'         { 
+                     Buffer.add_char buf '\r'; quote buf lexbuf
+                   }
+  | '\\' 'f'         { 
+                     Buffer.add_char buf '\012'; quote buf lexbuf
+                   }
+  | '\\' 'b'         { 
+                     Buffer.add_char buf '\b'; quote buf lexbuf
+                   }
+  | '\\' '\\'         { 
+                     Buffer.add_char buf '\\'; quote buf lexbuf
+                   }
+  | '\\' '/'         { 
+                     Buffer.add_char buf '/'; quote buf lexbuf
+                   }
   | '\r'  { failwith "end of line not allowed" }
 
   | '\\' '"'  { 
