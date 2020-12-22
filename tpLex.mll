@@ -71,6 +71,24 @@ and
   | '\\' 'n'         { 
                      Buffer.add_char buf '\n'; quote buf lexbuf
                    }
+  | '\\' 't'         { 
+                     Buffer.add_char buf '\t'; quote buf lexbuf
+                   }
+  | '\\' 'r'         { 
+                     Buffer.add_char buf '\r'; quote buf lexbuf
+                   }
+  | '\\' 'f'         { 
+                     Buffer.add_char buf '\012'; quote buf lexbuf
+                   }
+  | '\\' 'b'         { 
+                     Buffer.add_char buf '\b'; quote buf lexbuf
+                   }
+  | '\\' '\\'         { 
+                     Buffer.add_char buf '\\'; quote buf lexbuf
+                   }
+  | '\\' '/'         { 
+                     Buffer.add_char buf '/'; quote buf lexbuf
+                   }
   | '\r'  { failwith "end of line not allowed" }
 
   | '\\' '"'  { 
@@ -98,13 +116,10 @@ and
         with Not_found -> ID id
       }
   | lettreMaj LC * as id
-      { (* id contient le texte reconnu. On verifie s'il s'agit d'un mot-clef
-         * auquel cas on renvoie le token associe. Sinon on renvoie Id avec le
+      { (* id contient le texte reconnu. On renvoie Id avec le
          * texte reconnu en valeur 
          *)
-        try
-          Hashtbl.find keyword_table id
-        with Not_found -> CLASSID id
+         CLASSID id
       }
   | [' ''\t''\r']+  { (* consommer les delimiteurs, ne pas les transmettre
                        * et renvoyer ce que renverra un nouvel appel a
