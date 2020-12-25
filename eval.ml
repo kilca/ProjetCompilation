@@ -28,6 +28,10 @@ type tableCO =
     mutable objet : ((string, objetHash) Hashtbl.t) 
   };;
 
+(*pour debug (et c'est hallucinant que ocaml l'ai pas) *)
+let print_bool b=
+  Printf.printf "%B" b
+  ;;
 
 let table = ref { classe = Hashtbl.create 50; objet = Hashtbl.create 50 };;
 
@@ -61,7 +65,10 @@ let remplirClasse (x : classDecl)=
     let me = !met in
     let c = !co in
     if (!co = None) then failwith ("error there is no constructor in "^x.nom)
-    else Hashtbl.add !table.classe x.nom {data=x;attr=at;meth=me;cons=c}
+    else 
+    begin 
+      Hashtbl.add !table.classe x.nom {data=x;attr=at;meth=me;cons=c}
+    end
 
 ;;
 
@@ -72,7 +79,7 @@ let remplirObjet (x : Ast.objetDecl)=
   Hashtbl.add !table.objet x.nom {data=x;attr=x.dec;meth=x.fon}
 ;;
 
-let remplirTableCO c =
+let remplirTableCO c temp=
   (*TODO REMPLIR METHODES PAR ORDRE DE PARENT *)
   (*TODO APPELER TESTEXTENDS ICI *)
   (*TODO AJOUTER ATTRIBUTS DE EXTENDED *)
@@ -88,7 +95,7 @@ let testExtends c=
     begin
     match x.ext with
     | Some a ->  
-    if (Hashtbl.mem !table.classe a) 
+    if (not (Hashtbl.mem !table.classe a)) 
     then failwith ("error the class extended by"^x.nom^" doesn't exist")
     else if (x.nom = a)
     then failwith ("error a class :"^x.nom^" cannot extends themself")
@@ -99,10 +106,18 @@ let testExtends c=
 
 let eval ld e =
 
+  let tmp = Hashtbl.create 50 in
+  List.iter (fun d ->   match d with
+  Class x -> Hashtbl.add tmp x.nom x
+  |Objet x -> ()) ld;
+
+
   ajouterClassesDefauts ld;
   (*on ne fait que remplir les hashtables et array (on verifie la base mais pas extends) *)
-  List.iter (fun d -> remplirTableCO d) ld;
-
+  List.iter (fun d -> remplirTableCO d tmp) ld;
   (*on verifie les extends et on rempli encore*)
-  List.iter (fun d -> testExtends d) ld
+  List.iter (fun d -> testExtends d) ld;
+
+  print_string "Verif with success"
+
 ;;
