@@ -77,17 +77,12 @@ type membreClasse =
 | Con of consDecl
 | Att of decl
 
-(*bloc d'une classe class{...} *)
-type classBloc ={
-  dec : membreClasse list;
-}
-
 (*declaration d'en tete d'une classe *)
 type classDecl = {
   nom : string;
   para : paramDecl;
   ext : string option;(*attention !!! optionnel*)
-  cbl : classBloc;
+  cbl : membreClasse list;
   }
 
 (*declaration d'en tete d'un objet *)

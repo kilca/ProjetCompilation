@@ -146,9 +146,9 @@ let print_confun (p : Ast.membreClasse) =
    
 ;;
   
-let print_classBloc (p : Ast.classBloc) =
+let print_classBloc (p : membreClasse list) =
    print_string "[";
-   List.iter (fun d -> print_string "  ";print_confun d;print_newline ()) p.dec;
+   List.iter (fun d -> print_string "  ";print_confun d;print_newline ()) p;
    print_newline ();
    print_string "]"
 ;;

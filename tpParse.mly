@@ -126,7 +126,7 @@ confun:
 (*declaration du corp/bloc de la classe *)
 class_bloc: (*bloc de la classe *)
   IS LACCO decs=list(confun) RACCO 
-  {{dec=decs}}
+  {decs}
 
 (*declaration globale d'un objet *)
 objet_declaration:
