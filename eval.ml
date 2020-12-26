@@ -4,12 +4,14 @@ open Ast
 ---Verificateur Contextuel---
 *)
 
+
+
 (*Pour declarer variable "globale" et eviter de le redonner a chaque parametre*)
 type classHash = {
   data : Ast.classDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
-  meth : ((string, Ast.funDecl) Hashtbl.t);
-  cons : Ast.consDecl option(*jamais None mais bon .. *)
+  meth : ((string, Ast.funDecl list) Hashtbl.t);
+  cons : Ast.consDecl(*jamais None mais bon .. *)
 };;
 
 type objetHash = {
@@ -36,36 +38,55 @@ let ajouterClassesDefauts ld= ()
 ;;
 
 let ajouterAttr (a : decl) r =
-  if (Hashtbl.mem r a.lhs)
+  if (Hashtbl.mem r a.lhs && a.isVar)
   then
-  failwith ("an attribut with name "^a.lhs^" already exist")
+  failwith ("an attribut with name "^a.lhs^" already exist (probably in parent)")
   else
     Hashtbl.add r a.lhs a;
 ;;
 
+let alreadyMeth (mlist : funDecl list) (m : funDecl)= ()
+  (*TODO Check has not same param types and name (except override)*)
+;;
+
+(*TODO Check has not same param types and name (except override)*)
+let ajouterMeth (a : funDecl) r =
+  if (Hashtbl.mem r a.nom)
+  then begin
+    let t = Hashtbl.find r a.nom in
+    Hashtbl.add r a.nom (a::t) 
+  end
+  else
+    Hashtbl.add r a.nom [a];
+;;
+
 (* rempli la classe *)
-(*TODO PRENDRE EN COMPTE LA CLASSE PARENT EN AJOUTANT ATTRIBUTS (APRES AVOIR CHANGE EN HASHTBL)*)
 let remplirClasse2 (x: classDecl) (parent: classHash option)= 
   if (Hashtbl.mem !table.objet x.nom || Hashtbl.mem !table.objet x.nom) 
   then failwith ("error a class or objet with name "^x.nom^" already exist") 
   else
-    let atable = Hashtbl.create 50 in
-    let mtable = Hashtbl.create 50 in
+    let atable = match parent with
+    |Some p -> Hashtbl.copy p.attr
+    |None -> Hashtbl.create 50
+    in
+    let mtable = match parent with
+    | Some p -> Hashtbl.copy p.meth
+    |None -> Hashtbl.create 50 
+    in
+
     let co = ref None in
     List.iter (fun d -> ajouterAttr d atable) x.para;
     List.iter (
       fun d -> match d with
-      | Fun a -> Hashtbl.add mtable a.nom a 
+      | Fun a -> ajouterMeth a mtable 
       | Con a -> if (!co <> None) then failwith ("error class "^x.nom^" has more than 1 constructor") else co := Some a
       | Att a -> if (not a.isVar) then failwith ("error attribut "^a.lhs^" is not a var") else ajouterAttr a atable
     ) x.cbl;
     let c = !co in
-    if (!co = None) then failwith ("error there is no constructor in "^x.nom)
-    else 
-    begin 
-      Hashtbl.add !table.classe x.nom {data=x;attr=atable;meth=mtable;cons=c};
-      Hashtbl.find !table.classe x.nom
-    end
+    match c with
+    |None ->failwith ("error there is no constructor in "^x.nom)
+    |Some sc -> Hashtbl.add !table.classe x.nom {data=x;attr=atable;meth=mtable;cons=sc};
+                Hashtbl.find !table.classe x.nom
 
 ;;
 

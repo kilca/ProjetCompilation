@@ -1,6 +1,9 @@
 object Test is {
-   def test2(p: PointColore) is {
+   def a() is {
       p.couleur().name().print();
+   }
+   def a(v : Integer) is{
+
    }
     var v : Integer;
 }
