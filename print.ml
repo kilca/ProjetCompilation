@@ -174,8 +174,7 @@ let print_objetDecl p =
    print_string "OBJET[ ";
    print_string p.nom;
    print_newline ();
-   List.iter (fun d -> print_decl d;print_newline ()) p.dec;
-   List.iter (fun d -> print_funDecl d;print_newline ()) p.fon;
+   List.iter (fun d -> print_confun d;print_newline ()) p.cbl;
    print_string "]"
 ;;
 

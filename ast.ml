@@ -88,8 +88,7 @@ type classDecl = {
 (*declaration d'en tete d'un objet *)
 type objetDecl = {
   nom : string;
-  dec : decl list;
-  fon : funDecl list;
+  cbl : membreClasse list;
 }
 
 (*classe ou objet (pour main) *)

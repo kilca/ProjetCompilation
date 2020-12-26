@@ -117,9 +117,14 @@ class_declaration :
     CLASS n=CLASSID p = delimited (LPAREN,separated_list(COMMA,declaration),RPAREN) ex=option(opt_ext) c=class_bloc 
     {{nom=n;para=p;ext=ex;cbl=c}}
 
-(*soit constructeur soit fonction *)
+(*soit attribut soit constructeur soit fonction *)
 confun:
  x =con_declaration {Con(x)}
+| x = fun_declaration {Fun (x)}
+| x = declaration_instr {Att (x)}
+
+(*soit attribut soit fonction (pour objet) *)
+confunob:
 | x = fun_declaration {Fun (x)}
 | x = declaration_instr {Att (x)}
 
@@ -130,8 +135,8 @@ class_bloc: (*bloc de la classe *)
 
 (*declaration globale d'un objet *)
 objet_declaration:
-    OBJECT n=CLASSID IS LACCO ld =list(declaration_instr) func=list(fun_declaration) RACCO 
-    {{nom=n;dec =ld;fon=func}}
+    OBJECT n=CLASSID IS LACCO cb =list(confunob) RACCO 
+    {{nom=n;cbl =cb}}
 
 (*definission du type de retour de fonction (optionnel)*)
 opt_type : COLON ty=CLASSID {ty}

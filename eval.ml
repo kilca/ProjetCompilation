@@ -4,20 +4,18 @@ open Ast
 ---Verificateur Contextuel---
 *)
 
-(*TODO CHANGER LES LIST EN HASHTBL*)
-
 (*Pour declarer variable "globale" et eviter de le redonner a chaque parametre*)
 type classHash = {
   data : Ast.classDecl;
-  attr : Ast.decl list;
-  meth : Ast.funDecl list;
+  attr : ((string, Ast.decl) Hashtbl.t);
+  meth : ((string, Ast.funDecl) Hashtbl.t);
   cons : Ast.consDecl option(*jamais None mais bon .. *)
 };;
 
 type objetHash = {
   data : Ast.objetDecl;
-  attr : Ast.decl list;
-  meth : Ast.funDecl list;
+  attr : ((string, Ast.decl) Hashtbl.t);
+  meth : ((string, Ast.funDecl) Hashtbl.t);
 };;
 
 type tableCO = 
@@ -38,11 +36,11 @@ let ajouterClassesDefauts ld= ()
 ;;
 
 let ajouterAttr (a : decl) r =
-  if (not (List.for_all (fun d -> (d.lhs <> a.lhs)) !r ) )
+  if (Hashtbl.mem r a.lhs)
   then
   failwith ("an attribut with name "^a.lhs^" already exist")
   else
-    r := a::!r;
+    Hashtbl.add r a.lhs a;
 ;;
 
 (* rempli la classe *)
@@ -51,23 +49,21 @@ let remplirClasse2 (x: classDecl) (parent: classHash option)=
   if (Hashtbl.mem !table.objet x.nom || Hashtbl.mem !table.objet x.nom) 
   then failwith ("error a class or objet with name "^x.nom^" already exist") 
   else
-    let att = ref [] in
-    let met = ref [] in
+    let atable = Hashtbl.create 50 in
+    let mtable = Hashtbl.create 50 in
     let co = ref None in
-    List.iter (fun d -> ajouterAttr d att) x.para;
+    List.iter (fun d -> ajouterAttr d atable) x.para;
     List.iter (
       fun d -> match d with
-      | Fun a -> met := a::!met 
+      | Fun a -> Hashtbl.add mtable a.nom a 
       | Con a -> if (!co <> None) then failwith ("error class "^x.nom^" has more than 1 constructor") else co := Some a
-      | Att a -> if (not a.isVar) then failwith ("error attribut "^a.lhs^" is not a var") else ajouterAttr a att
+      | Att a -> if (not a.isVar) then failwith ("error attribut "^a.lhs^" is not a var") else ajouterAttr a atable
     ) x.cbl;
-    let at = !att in
-    let me = !met in
     let c = !co in
     if (!co = None) then failwith ("error there is no constructor in "^x.nom)
     else 
     begin 
-      Hashtbl.add !table.classe x.nom {data=x;attr=at;meth=me;cons=c};
+      Hashtbl.add !table.classe x.nom {data=x;attr=atable;meth=mtable;cons=c};
       Hashtbl.find !table.classe x.nom
     end
 
@@ -95,7 +91,15 @@ let remplirObjet (x : Ast.objetDecl)=
   if (Hashtbl.mem !table.objet x.nom || Hashtbl.mem !table.objet x.nom) 
   then failwith ("error a class or objet with name "^x.nom^" already exist")
   else
-  Hashtbl.add !table.objet x.nom {data=x;attr=x.dec;meth=x.fon}
+  let atable = Hashtbl.create 50 in
+  let mtable = Hashtbl.create 50 in
+  List.iter (fun a -> 
+    match a with
+    | Att e -> Hashtbl.add atable e.lhs e
+    | Fun e -> Hashtbl.add mtable e.nom e
+    | Con e -> failwith "error constructor in object (??error should have happened in syntax)"
+  ) x.cbl;
+  Hashtbl.add !table.objet x.nom {data=x;attr=atable;meth=mtable}
 ;;
 
 let remplirTableCO c temp=
@@ -108,9 +112,9 @@ let testExtends (x : classDecl) tbl=
     match x.ext with
     | Some a ->  
     if (not (Hashtbl.mem tbl a)) 
-    then failwith ("error the class extended by"^x.nom^" doesn't exist")
+    then failwith ("error the class extended by "^x.nom^" doesn't exist")
     else if (x.nom = a)
-    then failwith ("error a class :"^x.nom^" cannot extends themself")
+    then failwith ("error the class : "^x.nom^" cannot extends themself")
     | None -> ()
 ;;
 

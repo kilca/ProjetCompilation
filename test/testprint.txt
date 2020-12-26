@@ -1,3 +1,11 @@
+object Test is {
+   def test2(p: PointColore) is {
+      p.couleur().name().print();
+   }
+    var v : Integer;
+}
+
+
 {
 test : String := +2-3;
 is
