@@ -4,11 +4,9 @@ open Ast
 ---Verificateur Contextuel---
 *)
 
+(*TODO CHANGER LES LIST EN HASHTBL*)
+
 (*Pour declarer variable "globale" et eviter de le redonner a chaque parametre*)
-
-(*meth list car objet a deja meth list *)
-(*att list car plus facile a parcourir *)
-
 type classHash = {
   data : Ast.classDecl;
   attr : Ast.decl list;
@@ -36,7 +34,7 @@ let print_bool b=
 let table = ref { classe = Hashtbl.create 50; objet = Hashtbl.create 50 };;
 
 let ajouterClassesDefauts ld= ()
-(*on ajoute les classes String et Integer *)
+(*TODO on ajoute les classes String et Integer *)
 ;;
 
 let ajouterAttr (a : decl) r =
@@ -47,7 +45,9 @@ let ajouterAttr (a : decl) r =
     r := a::!r;
 ;;
 
-let remplirClasse (x : classDecl)= 
+(* rempli la classe *)
+(*TODO PRENDRE EN COMPTE LA CLASSE PARENT EN AJOUTANT ATTRIBUTS (APRES AVOIR CHANGE EN HASHTBL)*)
+let remplirClasse2 (x: classDecl) (parent: classHash option)= 
   if (Hashtbl.mem !table.objet x.nom || Hashtbl.mem !table.objet x.nom) 
   then failwith ("error a class or objet with name "^x.nom^" already exist") 
   else
@@ -67,9 +67,28 @@ let remplirClasse (x : classDecl)=
     if (!co = None) then failwith ("error there is no constructor in "^x.nom)
     else 
     begin 
-      Hashtbl.add !table.classe x.nom {data=x;attr=at;meth=me;cons=c}
+      Hashtbl.add !table.classe x.nom {data=x;attr=at;meth=me;cons=c};
+      Hashtbl.find !table.classe x.nom
     end
 
+;;
+
+
+(*on parcours jusqu'au classes parents *)
+(*[!] BUG SI EXTENDS CIRCULAIRE *)
+(*techniquement un fold mais trop dangereu a faire *)
+let rec remplirClasse1 (nom : string) temp=
+
+  (*si elle a deja ete ajoute aux donnes de classes *)
+  if (Hashtbl.mem !table.classe nom) 
+  then Hashtbl.find !table.classe nom
+  else
+  begin
+    let x = Hashtbl.find temp nom in
+    match x.ext with
+    |Some a -> remplirClasse2 x (Some (remplirClasse1 a temp))
+    |None -> remplirClasse2 (Hashtbl.find temp nom) None
+  end
 ;;
 
 let remplirObjet (x : Ast.objetDecl)=
@@ -80,28 +99,19 @@ let remplirObjet (x : Ast.objetDecl)=
 ;;
 
 let remplirTableCO c temp=
-  (*TODO REMPLIR METHODES PAR ORDRE DE PARENT *)
-  (*TODO APPELER TESTEXTENDS ICI *)
-  (*TODO AJOUTER ATTRIBUTS DE EXTENDED *)
   match c with
-  Class x -> remplirClasse x
-  |Objet x -> remplirObjet x
+  |Class x -> remplirClasse1 x.nom temp; ()
+  |Objet x -> remplirObjet x;
 ;;
 
-(*todo check attributs heritage *)
-let testExtends c=
-  match c with
-  Class x -> 
-    begin
+let testExtends (x : classDecl) tbl= 
     match x.ext with
     | Some a ->  
-    if (not (Hashtbl.mem !table.classe a)) 
+    if (not (Hashtbl.mem tbl a)) 
     then failwith ("error the class extended by"^x.nom^" doesn't exist")
     else if (x.nom = a)
     then failwith ("error a class :"^x.nom^" cannot extends themself")
     | None -> ()
-    end
-  |Objet x -> ()
 ;;
 
 let eval ld e =
@@ -113,11 +123,15 @@ let eval ld e =
 
 
   ajouterClassesDefauts ld;
-  (*on ne fait que remplir les hashtables et array (on verifie la base mais pas extends) *)
-  List.iter (fun d -> remplirTableCO d tmp) ld;
-  (*on verifie les extends et on rempli encore*)
-  List.iter (fun d -> testExtends d) ld;
 
-  print_string "Verif with success"
+  (*on verifie les extends avant d'ajouter les classes (sinon erreur)*)
+  Hashtbl.iter (fun a d -> testExtends d tmp) tmp;
+
+  (*on rempli les hashtables et array*)
+  List.iter (fun d -> remplirTableCO d tmp) ld;
+
+  print_newline ();
+  print_string "Verificated with success";
+  print_newline ();
 
 ;;
