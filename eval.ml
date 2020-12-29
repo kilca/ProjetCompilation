@@ -4,20 +4,20 @@ open Ast
 ---Verificateur Contextuel---
 *)
 
-
-
 (*Pour declarer variable "globale" et eviter de le redonner a chaque parametre*)
+type methParam = string*string list;;
+
 type classHash = {
   data : Ast.classDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
-  meth : ((string, Ast.funDecl list) Hashtbl.t);
+  meth : ((methParam, Ast.funDecl) Hashtbl.t);
   cons : Ast.consDecl(*jamais None mais bon .. *)
 };;
 
 type objetHash = {
   data : Ast.objetDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
-  meth : ((string, Ast.funDecl) Hashtbl.t);
+  meth : ((methParam, Ast.funDecl) Hashtbl.t);
 };;
 
 type tableCO = 
@@ -40,25 +40,38 @@ let ajouterClassesDefauts ld= ()
 let ajouterAttr (a : decl) r =
   if (Hashtbl.mem r a.lhs && a.isVar)
   then
-  failwith ("an attribut with name "^a.lhs^" already exist (probably in parent)")
+  (*failwith ("an attribut with name "^a.lhs^" already exist (probably in parent)")*)
+  Hashtbl.add r a.lhs a
   else
-    Hashtbl.add r a.lhs a;
+    Hashtbl.add r a.lhs a
 ;;
 
-let alreadyMeth (mlist : funDecl list) (m : funDecl)= ()
-  (*TODO Check has not same param types and name (except override)*)
+
+let to_methParam (a : funDecl)=
+  let s = ref [] in
+  List.iter (fun (x : decl) -> s := x.typ :: !s) a.para;
+  (a.nom,!s)
 ;;
 
-(*TODO Check has not same param types and name (except override)*)
+(*Todo check double function type*)
 let ajouterMeth (a : funDecl) r =
-  if (Hashtbl.mem r a.nom)
-  then begin
-    let t = Hashtbl.find r a.nom in
-    Hashtbl.add r a.nom (a::t) 
-  end
+
+  if (Hashtbl.mem r (to_methParam a))
+  then 
+    begin
+      if (a.over) 
+      then Hashtbl.add r (to_methParam a) a
+      else failwith "function already defined (missing override ?)"
+    end
   else
-    Hashtbl.add r a.nom [a];
-;;
+    begin
+      if (not a.over) then
+        Hashtbl.add r (to_methParam a) a
+      else
+        failwith "function must be present in parent"
+    end
+  ;;
+
 
 (* rempli la classe *)
 let remplirClasse2 (x: classDecl) (parent: classHash option)= 
@@ -117,7 +130,7 @@ let remplirObjet (x : Ast.objetDecl)=
   List.iter (fun a -> 
     match a with
     | Att e -> Hashtbl.add atable e.lhs e
-    | Fun e -> Hashtbl.add mtable e.nom e
+    | Fun e -> ajouterMeth e mtable
     | Con e -> failwith "error constructor in object (??error should have happened in syntax)"
   ) x.cbl;
   Hashtbl.add !table.objet x.nom {data=x;attr=atable;meth=mtable}
@@ -139,6 +152,8 @@ let testExtends (x : classDecl) tbl=
     | None -> ()
 ;;
 
+
+
 let eval ld e =
 
   let tmp = Hashtbl.create 50 in
@@ -154,6 +169,11 @@ let eval ld e =
 
   (*on rempli les hashtables et array*)
   List.iter (fun d -> remplirTableCO d tmp) ld;
+
+  (* TODO :
+  check instruction types
+  check methodes sens
+  *)
 
   print_newline ();
   print_string "Verificated with success";
