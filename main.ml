@@ -9,11 +9,11 @@ let parse_with_error lexbuf file_in chan =
       pos.pos_lnum (pos.pos_cnum - pos.pos_bol + 1)
   in
   try
-    let ld, e = TpParse.prog TpLex.token lexbuf in
+    let codl, main = TpParse.prog TpLex.token lexbuf in (* classObjectDeclarationList, main programm function *)
     
-    Print.print_progType (ld,e);
-    Eval.eval ld e
-    (* Compil.compile ld e chan; *)
+    Print.print_progType (codl, main);
+    Eval.eval codl main;
+    Compil.compile codl main chan;
     
   with
     TpParse.Error ->

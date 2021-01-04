@@ -21,3 +21,6 @@ tpParse.mli : tpParse.mly ast.ml
 
 clean:
 	rm -rf  tp testLex *.o *.cmi *.cmo *.cmx *~ $(GENERATED)
+
+cleanOut: clean
+	rm -f out.txt
