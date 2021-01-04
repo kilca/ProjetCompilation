@@ -33,6 +33,48 @@ let print_bool b=
 
 let table = ref { classe = Hashtbl.create 50; objet = Hashtbl.create 50 };;
 
+let print =
+  {
+    nom = "print";
+    para = [];
+    typ =None;
+    over = false;
+    corp = Bloc([],[]);
+  };;
+ let println =
+   {
+     nom = "println";
+     para = [];
+     typ =None;
+     over = false;
+     corp = Bloc([],[]);
+   };;
+let toString =
+  {
+    nom = "toString";
+    para = [];
+    typ = Some("String");
+    over = false;
+    corp = Bloc([],[]);
+  };;
+
+
+let integer =
+  {
+    nom = "Integer";
+    para = [];
+    ext = None;
+    cbl =[Fun toString];
+  };;
+
+let string =
+  {
+    nom = "String";
+    para = [];
+    ext = None;
+    cbl =[Fun print; Fun println];
+  };;
+
 let ajouterClassesDefauts ld=()
 (*TODO on ajoute les classes String et Integer *)
 ;;
