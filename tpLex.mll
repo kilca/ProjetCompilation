@@ -64,7 +64,7 @@ rule
 
 and
  quote buf = parse
-  '"'            { CSTE (Ast.String (Buffer.contents buf)) }
+  '"'            { CSTESTRING (Ast.String (Buffer.contents buf)) }
   | '\n'   { 
                     failwith "end of line not allowed"
                    }
@@ -128,7 +128,7 @@ and
                        token lexbuf
                     }
   | '\n'           { next_line lexbuf; token lexbuf}
-  | chiffre+ as lxm { CSTE (Ast.Int (int_of_string lxm)) }
+  | chiffre+ as lxm { CSTEINT (Ast.Int (int_of_string lxm)) }
   | "/*"           { comment lexbuf }
   | '"'            { quote (Buffer.create 17) lexbuf} 
   | '+'            { PLUS }

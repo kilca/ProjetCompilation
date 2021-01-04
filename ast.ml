@@ -3,16 +3,20 @@ type opComp =
   Eq | Neq | Lt | Le | Gt | Ge
 
 (*constante (type defini dans lex)*)
-type const=
+type constInt=
   Int of int
-| String of string
+(*| String of string*)
+
+type constString =
+String of string
 
 
 (*expression (2+2) *)
 type expType =
   Id of string (*commence forcemment par minuscule *)
 | ClassID of string (*et objet, commence forcemment par majuscule *)
-| Cste of const
+| Cste of constInt
+| CsteStr of constString
 | Plus of expType*expType
 | Minus of expType*expType
 | Times of expType*expType

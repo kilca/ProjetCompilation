@@ -15,19 +15,28 @@ let print_opComp (p : Ast.opComp) =
    | Ge -> print_string ">="
 ;;  
   
-let print_const (p : Ast.const)=
- print_string "CONST[";
+let print_constInt (p : Ast.constInt)=
+ print_string "CONSTINT[";
  match p with
- Int i -> print_int i;print_string "]"
- | String s -> print_string s;print_string "]"
+ Int i ->  print_int i;print_string "]"
+ (*| String s -> print_string s;print_string "]"*)
 ;;
   
+
+let print_constString (p : Ast.constString)=
+ print_string "CONSTSTRING[";
+ match p with
+ (*Int i -> print_int i;print_string "]"*)
+  String s ->  print_string s;print_string "]"
+;;
+
 
 let rec print_expType (e : Ast.expType) =
    match e with
        Id s -> print_string "ID[";print_string s;print_string "]"
     | ClassID s -> print_string s
-     | Cste i -> print_const i
+     | Cste i -> print_constInt i
+     | CsteStr i -> print_constString i
      | Plus(g, d) ->
         print_string "["; print_expType g; print_string " + ";
         print_expType d; print_string "]"

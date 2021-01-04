@@ -4,7 +4,9 @@ open Ast
 %}
 %token <string> ID
 %token <string> CLASSID
-%token <Ast.const> CSTE
+%token <Ast.constInt> CSTEINT
+%token <Ast.constString> CSTESTRING
+
 
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV
@@ -90,7 +92,8 @@ declaration :
 (*les expressions du langage*)
 expr:
     x = ID                        { Id x }
-  | v = CSTE                      { Cste v }
+  | v = CSTEINT                      { Cste v }
+  | v = CSTESTRING                      { CsteStr v }
   (* OPERATEURS : *)
   | g = expr PLUS d = expr        { Plus (g, d) }
   | g = expr MINUS d = expr       { Minus (g, d) }
@@ -106,7 +109,7 @@ expr:
   | e= expr DOT i=ID {Selec(e,i)}
   | e = delimited (LPAREN, expr, RPAREN) { e }
   | x=expr DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN) { Call (x,i,param) }
-  | x=CLASSID DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN)   { Call (Cste(String(x)),i,param) } (* ou plutot Cste->ID ? *)
+  | x=CLASSID DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN)   { Call (CsteStr(String(x)),i,param) } (* ou plutot Cste->ID ? *)
   | NEW i=CLASSID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN) {Inst(i,param)}
 
 (*le extends de classe *)
