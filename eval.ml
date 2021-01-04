@@ -33,7 +33,7 @@ let print_bool b=
 
 let table = ref { classe = Hashtbl.create 50; objet = Hashtbl.create 50 };;
 
-let ajouterClassesDefauts ld= ()
+let ajouterClassesDefauts ld=()
 (*TODO on ajoute les classes String et Integer *)
 ;;
 
@@ -107,7 +107,7 @@ let remplirClasse2 (x: classDecl) (parent: classHash option)=
 (*on parcours jusqu'au classes parents *)
 (*[!] BUG SI EXTENDS CIRCULAIRE *)
 (*techniquement un fold mais trop dangereu a faire *)
-let rec remplirClasse1 (nom : string) temp=
+let rec remplirClasse1 (nom : string)  temp=
 
   (*si elle a deja ete ajoute aux donnes de classes *)
   if (Hashtbl.mem !table.classe nom) 
@@ -138,7 +138,11 @@ let remplirObjet (x : Ast.objetDecl)=
 
 let remplirTableCO c temp=
   match c with
-  |Class x -> remplirClasse1 x.nom temp; ()
+  |Class x -> begin
+      try
+      remplirClasse1 x.nom temp; ()
+      with Stack_overflow -> failwith "Extends Erreur, Extends Circulaire ?"
+    end
   |Objet x -> remplirObjet x;
 ;;
 
@@ -154,24 +158,26 @@ let testExtends (x : classDecl) tbl=
 ;;
 
 (*On test la methode d'une classe *)
-let checkMethodClasse meth vars data=
+let checkMethodClasse meth vars data= ()
 
 ;;
 
 (*On teste toutes les methodes d'une classe *)
 let checkMethodsClasse c =
-  Hashtbl.iter (fun a d -> checkMethodClasse d (Hashtbl.copy c.attr) c.data ) c.meth
+  (*Hashtbl.iter (fun a d -> checkMethodClasse (Hashtbl.copy c.attr) c.data ) c.meth*)
+  ()
 ;;
 
+
 let eval ld e =
+
+  (*on ajoute les classes Integer et String*)
+  ajouterClassesDefauts ld;
 
   let tmp = Hashtbl.create 50 in
   List.iter (fun d ->   match d with
   Class x -> Hashtbl.add tmp x.nom x
   |Objet x -> ()) ld;
-
-  (*on ajoute les classes Integer et String*)
-  ajouterClassesDefauts ld;
 
   (*on verifie les extends avant d'ajouter les classes (sinon erreur)*)
   Hashtbl.iter (fun a d -> testExtends d tmp) tmp;
@@ -180,7 +186,7 @@ let eval ld e =
   List.iter (fun d -> remplirTableCO d tmp) ld;
 
   (*On verifie toutes les fonctions*)
-  Hashtbl.iter (fun a d -> checkMethodClasse d) !table.classe
+  Hashtbl.iter (fun a d -> checkMethodsClasse d) !table.classe;
 
   (* TODO :
   check instruction types

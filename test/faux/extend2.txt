@@ -1,0 +1,10 @@
+class A (var i : Integer) extends B is{
+	def A (var i : Integer) is {
+	}
+}
+class B (var i : Integer) extends A is {
+	def B (var i : Integer) is {
+	}
+}
+{
+}
