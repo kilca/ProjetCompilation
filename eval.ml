@@ -11,7 +11,7 @@ type classHash = {
   data : Ast.classDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
   meth : ((methParam, Ast.funDecl) Hashtbl.t);
-  cons : Ast.consDecl(*jamais None mais bon .. *)
+  cons : Ast.consDecl
 };;
 
 type objetHash = {
@@ -142,17 +142,26 @@ let remplirTableCO c temp=
   |Objet x -> remplirObjet x;
 ;;
 
+(*on vérifie si la classe extends existe et qu'elle n'extend pas elle meme *)
 let testExtends (x : classDecl) tbl= 
     match x.ext with
     | Some a ->  
     if (not (Hashtbl.mem tbl a)) 
     then failwith ("error the class extended by "^x.nom^" doesn't exist")
     else if (x.nom = a)
-    then failwith ("error the class : "^x.nom^" cannot extends themself")
+    then failwith ("error the class : "^x.nom^" cannot extends itself")
     | None -> ()
 ;;
 
+(*On test la methode d'une classe *)
+let checkMethodClasse meth vars data=
 
+;;
+
+(*On teste toutes les methodes d'une classe *)
+let checkMethodsClasse c =
+  Hashtbl.iter (fun a d -> checkMethodClasse d (Hashtbl.copy c.attr) c.data ) c.meth
+;;
 
 let eval ld e =
 
@@ -161,7 +170,7 @@ let eval ld e =
   Class x -> Hashtbl.add tmp x.nom x
   |Objet x -> ()) ld;
 
-
+  (*on ajoute les classes Integer et String*)
   ajouterClassesDefauts ld;
 
   (*on verifie les extends avant d'ajouter les classes (sinon erreur)*)
@@ -169,6 +178,9 @@ let eval ld e =
 
   (*on rempli les hashtables et array*)
   List.iter (fun d -> remplirTableCO d tmp) ld;
+
+  (*On verifie toutes les fonctions*)
+  Hashtbl.iter (fun a d -> checkMethodClasse d) !table.classe
 
   (* TODO :
   check instruction types
