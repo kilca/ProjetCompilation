@@ -5,6 +5,11 @@ open Ast
 *)
 
 (*Pour declarer variable "globale" et eviter de le redonner a chaque parametre*)
+
+(*
+string1 : nom de la fonction
+string2 list: nom des types de la fonction
+*)
 type methParam = string*string list;;
 
 type classHash = {
@@ -199,17 +204,19 @@ let testExtends (x : classDecl) tbl=
     | None -> ()
 ;;
 
-(*On test la methode d'une classe *)
-(*info methode *)
-(*attributs classe *)
-(*donnee de la methode *)
-let checkClassMethod infomethode (attributs :((string, Ast.decl) Hashtbl.t)) (classe :Ast.classDecl)= ()
 
+(*On test tout le bloc de la classe de la fonction d'une classe*)
+(*info methode Ast.funDecl  *)
+(*attributs : attributs classe (accedable que par this)*)
+(*classe : donnee de la methode *)
+let checkClassMethod (infomethode : Ast.funDecl) (attributs :((string, Ast.decl) Hashtbl.t)) (classe :Ast.classDecl)= 
+  let parametres = Hashtbl.create 50 in
+  List.iter (fun x -> Hashtbl.add parametres x.lhs x) infomethode.para
 ;;
 
 (*On teste toutes les methodes d'une classe *)
 let checkAllClassMethod (c :classHash) =
-  Hashtbl.iter (fun name dat -> checkClassMethod (name,dat) (Hashtbl.copy c.attr) c.data ) c.meth;
+  Hashtbl.iter (fun name dat -> checkClassMethod dat (Hashtbl.copy c.attr) c.data ) c.meth;
   ()
 ;;
 
