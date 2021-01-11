@@ -1,4 +1,6 @@
 {
 	a : Integer;
 	b : Integer := a;
+   is 
+   2;
 }

@@ -5,4 +5,6 @@
 
 	c : Integer := 1;
 	d : String := c; 
+   is 
+   2;
 }

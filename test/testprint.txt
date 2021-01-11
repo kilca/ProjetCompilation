@@ -1,16 +1,2 @@
-object Test is {
-   def a() is {
-      p.couleur().name().print();
-   }
-   def a(v : Integer) is{
-
-   }
-    var v : Integer;
-}
-
-
 {
-test : String := +2-3;
-is
-2+2;
 }

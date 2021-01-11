@@ -1,3 +1,5 @@
 {
    truc : Integer := b as A
+      is 
+   2;
 }

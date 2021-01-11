@@ -80,8 +80,8 @@ let string =
     cbl =[Fun print; Fun println];
   };;
 
-let ajouterClassesDefauts ld=()
-(*TODO on ajoute les classes String et Integer *)
+let ajouterClassesDefauts ld=
+  [Ast.Class(string);Ast.Class(integer)]@ld
 ;;
 
 let ajouterAttr (a : decl) r =
@@ -203,7 +203,17 @@ let testExtends (x : classDecl) tbl=
     then failwith ("error the class : "^x.nom^" cannot extends itself")
     | None -> ()
 ;;
-
+(*check si le constructeur de la classe a bien tout les memes parametres que la classe*)
+let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
+  if ((List.length classeAttr.para) <> (List.length constr.para)) 
+  then failwith ("error the number of arg of constructor of "^classeAttr.nom ^"doesn't match his class")
+  else
+  begin
+    List.iter2 (fun (a : decl) (b : decl) -> if (a.typ <> b.typ) 
+    then failwith ("error the type of param of constructor of "^classeAttr.nom ^" doesn't match his class")
+    ) classeAttr.para constr.para
+  end
+;;
 
 (*On test tout le bloc de la classe de la fonction d'une classe*)
 (*info methode Ast.funDecl  *)
@@ -211,7 +221,7 @@ let testExtends (x : classDecl) tbl=
 (*classe : donnee de la methode *)
 let checkClassMethod (infomethode : Ast.funDecl) (attributs :((string, Ast.decl) Hashtbl.t)) (classe :Ast.classDecl)= 
   let parametres = Hashtbl.create 50 in
-  List.iter (fun x -> Hashtbl.add parametres x.lhs x) infomethode.para
+  List.iter (fun x -> Hashtbl.add parametres x.lhs x) infomethode.para;
 ;;
 
 (*On teste toutes les methodes d'une classe *)
@@ -224,22 +234,24 @@ let checkAllClassMethod (c :classHash) =
 let eval ld e =
 
   (*on ajoute les classes Integer et String*)
-  ajouterClassesDefauts ld;
+  let nouvld = (ajouterClassesDefauts ld) in
 
   let tmp = Hashtbl.create 50 in
   List.iter (fun d ->   match d with
   Class x -> Hashtbl.add tmp x.nom x
-  |Objet x -> ()) ld;
+  |Objet x -> ()) nouvld;
 
   (*on verifie les extends avant d'ajouter les classes (sinon erreur)*)
   Hashtbl.iter (fun a d -> testExtends d tmp) tmp;
 
   (*on rempli les hashtables et array*)
-  List.iter (fun d -> remplirTableCO d tmp) ld;
+  List.iter (fun d -> remplirTableCO d tmp) nouvld;
+
+  (*on verifie tous les constructeur *)
+  Hashtbl.iter (fun a (d : classHash) -> checkConstructeur d.data d.cons) !table.classe;
 
   (*On verifie toutes les fonctions*)
   Hashtbl.iter (fun a d -> checkAllClassMethod d) !table.classe;
-
   (* TODO :
   check instruction types
   check methodes sens

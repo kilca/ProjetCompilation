@@ -1,27 +1,3 @@
-(*AUCUN*)
-
-
-(*
-let rec hasDecl (d1 : decl list) (d2 : decl list)=
-  if (List.length d1 <> List.length d2) then
-    false
-  else List.for_all2 (fun a,b -> a.type = b.type) d1 d2
-;;
-*)
-
-(* Check has not same param types and name (except override)*)
-(*
-let rec hasMeth (mlist : funDecl list) (m : funDecl)= ()
-match mlist with
-| [] -> false
-| x::s -> (hasDecl x.para m.para && x.nom = m.nom) || hasMeth s m 
-;;
-*)
-
-(*TODO Check has not same param types and name (except override)*)
-(*
-let alreadyMeth (mlist : funDecl list) (m : funDecl)= ()  
-;;
-*)
-
-(*TODO Check has not same param types and name (except override)*)
+{
+  a : Integer := a.b();
+}

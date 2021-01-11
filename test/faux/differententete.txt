@@ -1,3 +1,4 @@
+/*FAIT*/
 class A (var i : Integer) is{
   def A(var a: String) is {}
 }

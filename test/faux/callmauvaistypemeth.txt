@@ -1,7 +1,11 @@
 class A() is {
 def A() is {}
-def b() : String is {result:= "aaa";}
+def b() : String is {
+   result:= "aaa";
+   }
 }
 {
-   truc : Integer := A.b();
+   truc : Integer := a.b();
+   is 
+   2;
 }
