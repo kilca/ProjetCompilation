@@ -1,0 +1,8 @@
+class A (var i : Integer) is{
+  def A(var i: Integer) is {}
+  def truc() is {
+	result:= 2;
+  }
+}
+{
+}

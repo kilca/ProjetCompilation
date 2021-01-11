@@ -1,0 +1,7 @@
+class A (var i : Integer) is{
+  def A(var i: Integer) is {}
+  def truc() is {}
+  def truc() is {}
+}
+{
+}

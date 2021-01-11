@@ -1,0 +1,10 @@
+class A (var i : Integer) is{
+	def A (var i : Integer) is {
+	}
+}
+class A (var i : Integer) is{
+	def A (var i : Integer) is {
+	}
+}
+{
+}

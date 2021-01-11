@@ -1,0 +1,9 @@
+class A (var i : Integer) : B is{
+  def A(var i: Integer) is {}
+  def override truc() is {}
+}
+class B () is{
+  def B() is {}
+}
+{
+}

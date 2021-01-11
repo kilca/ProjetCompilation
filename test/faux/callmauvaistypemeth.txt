@@ -1,0 +1,7 @@
+class A() is {
+def A() is {}
+def b() : String is {result:= "aaa";}
+}
+{
+   truc : Integer := A.b();
+}

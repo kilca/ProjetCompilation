@@ -1,0 +1,8 @@
+{
+	a : Integer := 1;
+	b : String := "a";
+	a := b;
+
+	c : Integer := 1;
+	d : String := c; 
+}

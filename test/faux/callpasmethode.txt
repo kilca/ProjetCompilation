@@ -1,0 +1,6 @@
+class A() is {
+def A() is {}
+}
+{
+   truc : Integer := A.b();
+}
