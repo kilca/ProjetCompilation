@@ -200,13 +200,16 @@ let testExtends (x : classDecl) tbl=
 ;;
 
 (*On test la methode d'une classe *)
-let checkMethodClasse meth vars data= ()
+(*info methode *)
+(*attributs classe *)
+(*donnee de la methode *)
+let checkClassMethod infomethode (attributs :((string, Ast.decl) Hashtbl.t)) (classe :Ast.classDecl)= ()
 
 ;;
 
 (*On teste toutes les methodes d'une classe *)
-let checkMethodsClasse c =
-  (*Hashtbl.iter (fun a d -> checkMethodClasse (Hashtbl.copy c.attr) c.data ) c.meth*)
+let checkAllClassMethod (c :classHash) =
+  Hashtbl.iter (fun name dat -> checkClassMethod (name,dat) (Hashtbl.copy c.attr) c.data ) c.meth;
   ()
 ;;
 
@@ -228,7 +231,7 @@ let eval ld e =
   List.iter (fun d -> remplirTableCO d tmp) ld;
 
   (*On verifie toutes les fonctions*)
-  Hashtbl.iter (fun a d -> checkMethodsClasse d) !table.classe;
+  Hashtbl.iter (fun a d -> checkAllClassMethod d) !table.classe;
 
   (* TODO :
   check instruction types
