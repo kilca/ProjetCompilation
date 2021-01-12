@@ -31,6 +31,8 @@ type tableCO =
     mutable objet : ((string, objetHash) Hashtbl.t) 
   };;
 
+type choixBloc = Classe | Objet | Main;;
+
 (*pour debug (et c'est hallucinant que ocaml l'ai pas) *)
 let print_bool b=
   Printf.printf "%B" b
@@ -184,23 +186,23 @@ let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.de
 ;;
 
 
-(*[!] A modifier plus tard pour faire que marche avec main et objet (pas long)*)
-
 (*info method  : nomClasse*methParam*)
 (*fonction qui check le bloc de soit une methode de soit le main *)
-let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variables : ((string, Ast.decl) Hashtbl.t)) =
-  let isMain = (fst infomethod = "") in (*si le bloc courant est celui du main (ou un sous bloc de celui ci) *)
-  
-  (*Pour aider (attention marche pas si isMain et si dans Object (donc a revoir))*)
+(*quelbloc : soit Main, soit Classe, soit Objet *)
+let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variables : ((string, Ast.decl) Hashtbl.t)) (quelbloc : choixBloc) =
+
+
+  (*Pour aider (attention marche pas si quelbloc est Main ou Objet)*)
+  (*if quelbloc = Classe) then *)
   let (currentClass : classHash) = Hashtbl.find !table.classe (fst infomethod) in
   let (currentMethod : Ast.funDecl) = Hashtbl.find currentClass.meth (snd infomethod) in
   
   let variablesLocales = Hashtbl.create 50 in
-  ajouterDeclarations (fst bloc) variablesLocales;
+  ajouterDeclarations (fst bloc) variablesLocales;(*on ajoute les declarations locales du bloc *)
   let instructions = snd bloc in
       (* Etapes pour prendre en compte la portee : *)
-      (* - Recuperer: On check d'abord si declaration dans variables locales, sinon dans variables et sinon erreur *)
-      (*Techniquement il modifiera seulement si dans variables (mais on fait pas en vc) *)
+      (* -  On check d'abord si declaration dans variables locales, sinon dans variables et sinon erreur *)
+      (*Techniquement il modifiera seulement si dans variables (mais on modifie pas en vc) *)
   let checkInstructions ins =
     match ins with
       Expr e -> ()
@@ -209,7 +211,7 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
         (*on ajoute les variables locales a une copie des variables du bloc du dessus *)
         let sousVariables = Hashtbl.copy variables in
         Hashtbl.iter (fun a b -> Hashtbl.add sousVariables a b) variablesLocales;
-        checkBloc b infomethod variablesLocales
+        checkBloc b infomethod variablesLocales quelbloc
       end
     | Return oe -> ()
     | Ite (e,it,ie) -> ()
@@ -236,7 +238,7 @@ let checkAllClassMethod (c :classHash) =
     let variablesClassetParam = Hashtbl.copy c.attr in
     Hashtbl.add variablesClassetParam "this" thisdecl;
     List.iter (fun dec -> Hashtbl.add variablesClassetParam dec.lhs dec) fdec.para;
-    checkBloc fdec.corp (nomClasse,methpar) variablesClassetParam
+    checkBloc fdec.corp (nomClasse,methpar) variablesClassetParam Classe
   in Hashtbl.iter (fun methpara fdec -> remplirVariablesEtCallCheckBloc methpara fdec) c.meth
 ;;
 
@@ -260,12 +262,13 @@ let eval ld e =
   (*on verifie tous les constructeur *)
   Hashtbl.iter (fun a (d : classHash) -> checkConstructeur d.data d.cons) !table.classe;
 
-  (*On verifie toutes les fonctions*)
+  (*On verifie toutes les fonctions des classes*)
   Hashtbl.iter (fun a d -> checkAllClassMethod d) !table.classe;
-  (* TODO :
-  check instruction types
-  check methodes sens
-  *)
+  (*TODO : check Constructor Method *)
+
+  (*TODO checkAllObjetMethod *)
+
+  (*TODO checkMain *)
 
   print_newline ();
   print_string "Verificated with success";
