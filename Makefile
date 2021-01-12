@@ -1,5 +1,5 @@
 INTERFACES = tpParse.mli
-SOURCES    = ast.ml tpParse.ml tpLex.ml misc.ml print.ml eval.ml compil.ml main.ml
+SOURCES    = ast.ml primitives.ml tpParse.ml tpLex.ml misc.ml print.ml eval.ml compil.ml main.ml
 GENERATED  = tpLex.ml tpParse.ml tpParse.mli tpParse.automaton tpParse.conflicts
 
 tp: tpParse.mli $(SOURCES)

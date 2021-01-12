@@ -71,7 +71,7 @@ type funDecl={
   para: paramDecl;
   typ : string option; (*type de retour*) (*attention !!!! optionnel*)
   over : bool;
-  corp : instr;
+  corp : blocType;
 }
 
 (*PENSER A Verif en VC*)

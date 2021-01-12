@@ -1,5 +1,5 @@
 open Ast
-
+open Primitives
 (*
 ---Verificateur Contextuel---
 *)
@@ -38,50 +38,8 @@ let print_bool b=
 
 let table = ref { classe = Hashtbl.create 50; objet = Hashtbl.create 50 };;
 
-let print =
-  {
-    nom = "print";
-    para = [];
-    typ =None;
-    over = false;
-    corp = Bloc([],[]);
-  };;
- let println =
-   {
-     nom = "println";
-     para = [];
-     typ =None;
-     over = false;
-     corp = Bloc([],[]);
-   };;
-let toString =
-  {
-    nom = "toString";
-    para = [];
-    typ = Some("String");
-    over = false;
-    corp = Bloc([],[]);
-  };;
-
-
-let integer =
-  {
-    nom = "Integer";
-    para = [];
-    ext = None;
-    cbl =[Fun toString];
-  };;
-
-let string =
-  {
-    nom = "String";
-    para = [];
-    ext = None;
-    cbl =[Fun print; Fun println];
-  };;
-
 let ajouterClassesDefauts ld=
-  [Ast.Class(string);Ast.Class(integer)]@ld
+  [Ast.Class(Primitives.stringc);Ast.Class(Primitives.integerc)]@ld
 ;;
 
 let ajouterAttr (a : decl) r =
@@ -203,6 +161,7 @@ let testExtends (x : classDecl) tbl=
     then failwith ("error the class : "^x.nom^" cannot extends itself")
     | None -> ()
 ;;
+
 (*check si le constructeur de la classe a bien tout les memes parametres que la classe*)
 let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
   if ((List.length classeAttr.para) <> (List.length constr.para)) 
@@ -215,19 +174,70 @@ let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
   end
 ;;
 
-(*On test tout le bloc de la classe de la fonction d'une classe*)
-(*info methode Ast.funDecl  *)
-(*attributs : attributs classe (accedable que par this)*)
-(*classe : donnee de la methode *)
-let checkClassMethod (infomethode : Ast.funDecl) (attributs :((string, Ast.decl) Hashtbl.t)) (classe :Ast.classDecl)= 
-  let parametres = Hashtbl.create 50 in
-  List.iter (fun x -> Hashtbl.add parametres x.lhs x) infomethode.para;
+let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.decl) Hashtbl.t)) =
+  List.iter (fun x -> 
+  if (x.lhs = "this") then failwith "error, can't create a variable with name this"
+  else begin
+    Hashtbl.add variables x.lhs x
+  end
+  ) declarations
+;;
+
+
+(*[!] A modifier plus tard pour faire que marche avec main et objet (pas long)*)
+
+(*info method  : nomClasse*methParam*)
+(*fonction qui check le bloc de soit une methode de soit le main *)
+let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variables : ((string, Ast.decl) Hashtbl.t)) =
+  let isMain = (fst infomethod = "") in (*si le bloc courant est celui du main (ou un sous bloc de celui ci) *)
+  
+  (*Pour aider (attention marche pas si isMain et si dans Object (donc a revoir))*)
+  let (currentClass : classHash) = Hashtbl.find !table.classe (fst infomethod) in
+  let (currentMethod : Ast.funDecl) = Hashtbl.find currentClass.meth (snd infomethod) in
+  
+  let variablesLocales = Hashtbl.create 50 in
+  ajouterDeclarations (fst bloc) variablesLocales;
+  let instructions = snd bloc in
+      (* Etapes pour prendre en compte la portee : *)
+      (* - Recuperer: On check d'abord si declaration dans variables locales, sinon dans variables et sinon erreur *)
+      (*Techniquement il modifiera seulement si dans variables (mais on fait pas en vc) *)
+  let checkInstructions ins =
+    match ins with
+      Expr e -> ()
+    | Bloc b -> 
+      begin
+        (*on ajoute les variables locales a une copie des variables du bloc du dessus *)
+        let sousVariables = Hashtbl.copy variables in
+        Hashtbl.iter (fun a b -> Hashtbl.add sousVariables a b) variablesLocales;
+        checkBloc b infomethod variablesLocales
+      end
+    | Return oe -> ()
+    | Ite (e,it,ie) -> ()
+    | Assign (el,er) -> 
+      begin
+
+      end
+  in List.iter (fun x -> checkInstructions x) instructions
 ;;
 
 (*On teste toutes les methodes d'une classe *)
 let checkAllClassMethod (c :classHash) =
-  Hashtbl.iter (fun name dat -> checkClassMethod dat (Hashtbl.copy c.attr) c.data ) c.meth;
-  ()
+
+  (*a voir si c est une bonne chose *) 
+  let (nomClasse : string) = c.data.nom in
+  let thisdecl =
+    {
+    lhs = "this";
+    typ= nomClasse; 
+    isVar = false;(* a revoir *)
+    rhs = None;
+    } in
+  let remplirVariablesEtCallCheckBloc (methpar : methParam) (fdec : Ast.funDecl) =
+    let variablesClassetParam = Hashtbl.copy c.attr in
+    Hashtbl.add variablesClassetParam "this" thisdecl;
+    List.iter (fun dec -> Hashtbl.add variablesClassetParam dec.lhs dec) fdec.para;
+    checkBloc fdec.corp (nomClasse,methpar) variablesClassetParam
+  in Hashtbl.iter (fun methpara fdec -> remplirVariablesEtCallCheckBloc methpara fdec) c.meth
 ;;
 
 

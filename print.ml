@@ -141,9 +141,9 @@ let print_funDecl (p : Ast.funDecl)=
    print_string " )";
    print_string " :";
    match p.typ with
-      Some x -> print_string x;   print_instr p.corp;
+      Some x -> print_string x;   print_blocType p.corp;
       print_string "]"
-   | None ->  print_instr p.corp;
+   | None ->  print_blocType p.corp;
    print_string "]"
 ;;
 
