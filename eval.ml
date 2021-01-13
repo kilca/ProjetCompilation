@@ -45,11 +45,12 @@ let ajouterClassesDefauts ld=
 ;;
 
 let ajouterAttr (a : decl) r (enTete : bool) =
-  if (enTete) then
+  if (a.lhs = "this") then failwith "an attribut cannot be named this";
+  if (enTete) then (*si dans parenthese de classe genre : Couleur(ICI)*)
   begin
     if (a.isVar) then Hashtbl.add r a.lhs a
   end
-  else
+  else (*si dans attributs de classe genre : Couleur(){ICI}*)
   begin
     if (not a.isVar) then failwith ("an attribut must have var if not defined in parent : "^a.lhs)
     else Hashtbl.add r a.lhs a
@@ -167,16 +168,93 @@ let testExtends (x : classDecl) tbl=
     | None -> ()
 ;;
 
+let is_first_uppercase (s : string) =
+  if (s = "") then false
+  else begin
+    let c : char = s.[0] in
+    (Char.code(c) >= Char.code('A') && Char.code(c) <= Char.code('Z'))
+  end
+;;
+
+let expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtbl.t)) (lieu : string) =
+  match e with
+  Id (i : string) -> (Hashtbl.find variables i).typ 
+  | ClassID (ci : string) -> (Hashtbl.find !table.objet ci).data.nom
+  | Cste (c : constInt) -> "Integer"
+  | CsteStr (c : constString) -> "String"
+  | Plus (e1,e2) -> "Integer"
+  | Minus (e1,e2) -> "Integer"
+  | Times (e1,e2) -> "Integer"
+  | Div (e1,e2) -> "Integer"
+  | Concat (e1,e2) -> "String"
+  | UMinus e1 -> "Integer"
+  | UPlus e1 -> "Integer"
+  | Comp (o,e1,e2) -> "Integer"
+  | Cast (s,e) -> s
+  | Selec (et,s) -> s (*TODO *)
+  (*
+  begin
+    if (is_first_uppercase s) then
+      begin
+        let objet = (Hashtbl.find !table.objet ci) in
+        let ex = Hashtbl.find objet.attr
+      end
+    else (Hashtbl.find variables i).typ 
+    end
+    *)
+  | Call (e,s,el) -> s (*TODO *)
+  (*
+  begin
+  end
+  *)
+  | Inst (s,el) -> s
+
+
+;;
+
+(*verifie que les parametre du constructeur appele est le bon *)
+let checkParamSuperConstructeur (super : superO) (variables : ((string, Ast.decl) Hashtbl.t)) (nomClasse : string) =
+  let param = super.para in
+  let nom = super.ex in
+  (*la verification du fait que le nom existe a deja ete fait implicitement 
+  vu qu'il a verifie que le extend est bon et que super = extend
+  *)
+  let (constructorparent : consDecl) = (Hashtbl.find !table.classe nom).cons in
+
+  if ((List.length constructorparent.para) <> (List.length param)) 
+  then failwith ("error the number of arg of superconstructor called : "^nomClasse ^" doesn't match his class")
+  else
+  begin
+    List.iter2 (fun (a : decl) (b : expType) -> 
+    if (a.typ <> (expr_to_typestring b variables nomClasse)) then failwith ("error the type of argument of supercons doesnt match : "^nomClasse)
+    ) constructorparent.para param
+  end
+
+
+;;
+
 (*check si le constructeur de la classe a bien tout les memes parametres que la classe*)
 let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
   if ((List.length classeAttr.para) <> (List.length constr.para)) 
-  then failwith ("error the number of arg of constructor of "^classeAttr.nom ^"doesn't match his class")
+  then failwith ("error the number of arg of constructor of "^classeAttr.nom ^" doesn't match his class")
   else
   begin
     List.iter2 (fun (a : decl) (b : decl) -> if ((a.typ <> b.typ) || (a.isVar <> b.isVar) || (a.lhs <> b.lhs))
     then failwith ("error the type of param of constructor of "^classeAttr.nom ^" doesn't match his class")
     ) classeAttr.para constr.para
   end
+  ;
+  if (constr.nom <> classeAttr.nom) then failwith "error the constructor must have the same name as the class (it shouldnt happen here)";
+  match (constr.superrr,classeAttr.ext) with
+  None,None -> ()
+  |Some x, None -> failwith ("there must be a extend in the class if there is in the constructor in "^classeAttr.nom)
+  |None, Some x -> failwith ("there must be a extend in the constructor if there is in the class in "^classeAttr.nom)
+  |Some a, Some b ->
+    let (nomSuper : string) = a.ex in
+    let (nomExtend : string) = b in
+    if (nomSuper <> nomExtend) then failwith ("super of constructor is different than the extend of the class : "^classeAttr.nom)
+    else 
+    checkParamSuperConstructeur a ((Hashtbl.find !table.classe constr.nom).attr) constr.nom
 ;;
 
 let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.decl) Hashtbl.t)) =

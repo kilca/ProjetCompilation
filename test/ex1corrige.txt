@@ -167,7 +167,7 @@ class PointNoir(xc: Integer, yc:Integer) extends PointColore is {
 class DefaultPoint() extends PointColore is {
    def override estGris() : Integer := 0
    def override couleur() : Couleur := CouleurFactory.blanc()
-   def PointBlanc(xc: Integer, yc:Integer)
+   def DefaultPoint()
       : PointColore(0, 0, CouleurFactory.blanc()) is { /* empty */ }
 }
 
