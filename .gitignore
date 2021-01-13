@@ -13,5 +13,6 @@
 !testLex.ml
 !tpLex.mll
 !tpParse.mly
+!primitives.ml
 !test/*
 !test

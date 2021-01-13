@@ -44,13 +44,16 @@ let ajouterClassesDefauts ld=
   [Ast.Class(Primitives.stringc);Ast.Class(Primitives.integerc)]@ld
 ;;
 
-let ajouterAttr (a : decl) r =
-  if (Hashtbl.mem r a.lhs && a.isVar)
-  then
-  (*failwith ("an attribut with name "^a.lhs^" already exist (probably in parent)")*)
-  Hashtbl.add r a.lhs a
+let ajouterAttr (a : decl) r (enTete : bool) =
+  if (enTete) then
+  begin
+    if (a.isVar) then Hashtbl.add r a.lhs a
+  end
   else
-    Hashtbl.add r a.lhs a
+  begin
+    if (not a.isVar) then failwith ("an attribut must have var if not defined in parent : "^a.lhs)
+    else Hashtbl.add r a.lhs a
+  end
 ;;
 
 
@@ -81,26 +84,26 @@ let ajouterMeth (a : funDecl) r =
 
 
 (* rempli la classe *)
-let remplirClasse2 (x: classDecl) (parent: classHash option)= 
+let remplirClasse (x: classDecl) (parent: classHash option)= 
   if (Hashtbl.mem !table.objet x.nom || Hashtbl.mem !table.objet x.nom) 
   then failwith ("error a class or objet with name "^x.nom^" already exist") 
   else
-    let atable = match parent with
+    let atable = match parent with (*table des attributs *)
     |Some p -> Hashtbl.copy p.attr
     |None -> Hashtbl.create 50
     in
-    let mtable = match parent with
+    let mtable = match parent with (*table des methodes *)
     | Some p -> Hashtbl.copy p.meth
     |None -> Hashtbl.create 50 
     in
 
-    let co = ref None in
-    List.iter (fun d -> ajouterAttr d atable) x.para;
+    let co = ref None in (*pointeur du constructeur (type Option(Con))*)
+    List.iter (fun d -> ajouterAttr d atable true) x.para;
     List.iter (
       fun d -> match d with
       | Fun a -> ajouterMeth a mtable 
       | Con a -> if (!co <> None) then failwith ("error class "^x.nom^" has more than 1 constructor") else co := Some a
-      | Att a -> if (not a.isVar) then failwith ("error attribut "^a.lhs^" is not a var") else ajouterAttr a atable
+      | Att a -> if (not a.isVar) then failwith ("error attribut "^a.lhs^" is not a var") else (ajouterAttr a atable false)
     ) x.cbl;
     let c = !co in
     match c with
@@ -114,7 +117,7 @@ let remplirClasse2 (x: classDecl) (parent: classHash option)=
 (*on parcours jusqu'au classes parents *)
 (*[!] BUG SI EXTENDS CIRCULAIRE *)
 (*techniquement un fold mais trop dangereu a faire *)
-let rec remplirClasse1 (nom : string)  temp=
+let rec remplirAPartirClasseParent (nom : string)  temp=
 
   (*si elle a deja ete ajoute aux donnes de classes *)
   if (Hashtbl.mem !table.classe nom) 
@@ -123,8 +126,8 @@ let rec remplirClasse1 (nom : string)  temp=
   begin
     let x = Hashtbl.find temp nom in
     match x.ext with
-    |Some a -> remplirClasse2 x (Some (remplirClasse1 a temp))
-    |None -> remplirClasse2 (Hashtbl.find temp nom) None
+    |Some a -> remplirClasse x (Some (remplirAPartirClasseParent a temp))
+    |None -> remplirClasse (Hashtbl.find temp nom) None
   end
 ;;
 
@@ -147,7 +150,7 @@ let remplirTableCO c temp=
   match c with
   |Class x -> begin
       try
-      remplirClasse1 x.nom temp; ()
+      remplirAPartirClasseParent x.nom temp; ()
       with Stack_overflow -> failwith "Extends Erreur, Extends Circulaire ?"
     end
   |Objet x -> remplirObjet x;
@@ -170,7 +173,7 @@ let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
   then failwith ("error the number of arg of constructor of "^classeAttr.nom ^"doesn't match his class")
   else
   begin
-    List.iter2 (fun (a : decl) (b : decl) -> if (a.typ <> b.typ) 
+    List.iter2 (fun (a : decl) (b : decl) -> if ((a.typ <> b.typ) || (a.isVar <> b.isVar) || (a.lhs <> b.lhs))
     then failwith ("error the type of param of constructor of "^classeAttr.nom ^" doesn't match his class")
     ) classeAttr.para constr.para
   end
@@ -184,7 +187,6 @@ let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.de
   end
   ) declarations
 ;;
-
 
 (*info method  : nomClasse*methParam*)
 (*fonction qui check le bloc de soit une methode de soit le main *)
@@ -237,7 +239,13 @@ let checkAllClassMethod (c :classHash) =
   let remplirVariablesEtCallCheckBloc (methpar : methParam) (fdec : Ast.funDecl) =
     let variablesClassetParam = Hashtbl.copy c.attr in
     Hashtbl.add variablesClassetParam "this" thisdecl;
-    List.iter (fun dec -> Hashtbl.add variablesClassetParam dec.lhs dec) fdec.para;
+    List.iter (fun dec -> 
+    begin
+      if (dec.isVar && not (Hashtbl.mem c.attr dec.lhs)) 
+      then failwith ("a parameter with var is not an attribute in : "^ (fst methpar)^ " at "^ nomClasse)
+      else Hashtbl.add variablesClassetParam dec.lhs dec
+    end
+    ) fdec.para;
     checkBloc fdec.corp (nomClasse,methpar) variablesClassetParam Classe
   in Hashtbl.iter (fun methpara fdec -> remplirVariablesEtCallCheckBloc methpara fdec) c.meth
 ;;
