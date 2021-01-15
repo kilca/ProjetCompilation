@@ -126,7 +126,7 @@ let print_consDecl (p : Ast.consDecl)=
    print_string " )";
    print_newline ();
    match p.superrr with
-      Some x ->   print_blocType p.bloc;
+      Some x ->   print_blocType p.bloc; print_superO x;
       print_string "]";
     | None ->    print_blocType p.bloc;
     print_string "]";

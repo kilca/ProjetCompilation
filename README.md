@@ -1,7 +1,5 @@
 # ProjetCompilation
 
-12/01 : modifié l'eval pour que ca soit plus lisible et 1 fonction gere bloc d'instruction
-Modification AST : une fonction ne forme pas une instruction Bloc([],[]) mais une instruction bloctype
-vu qu'elle est forcemment un Bloc soit un bloctype
+DECLARER CLASSE ET OBJET AVEC MEME NOM
 
-mis la creation des primitives dans Primitives
+LES IDMAJ SONT DES CSTESTRING A MODIF
