@@ -447,7 +447,7 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
 (*On teste toutes les methodes d'une classe *)
 (*c : classeHash ou objetHash *)
 (*typ : Classe ou Objet *)
-let checkAllClassMethodAndAttributs (nom : string) (attr) (funs) (super: string) (typ : choixBloc)=
+let checkAllMethodAndAttributs (nom : string) (attr) (funs) (super: string) (typ : choixBloc)=
 
   (*fonction qui ajoute this*)
   let ajouterthis varcparam=
@@ -498,6 +498,20 @@ let checkAllClassMethodAndAttributs (nom : string) (attr) (funs) (super: string)
   Hashtbl.iter (fun s dec -> checkAssignDeclaration dec variables2 nom) attr (*on check les init des variables *)
 ;;
 
+let check_Main (b: Ast.blocType) =
+  (*
+  let variables = Hashtbl.create 50 in
+  List.iter (fun (x : Ast.decl) ->
+    if (Hashtbl.mem variables x.lhs) then print_string ("Warning : la variable : "^x.lhs^" existe deja dans main")
+    (*check this ou super ? *)
+    else Hashtbl.add variables x.lhs x
+  ) (fst b);
+  checkBloc (snd b) variables ("",[]) Main
+  *)
+  let truc = Hashtbl.create 50 in
+  checkBloc b ("",("",[])) truc Main
+;;
+
 let check_ClasseObjet_duplicat ld =
   let rec check tabl ld=
     match ld with
@@ -537,16 +551,17 @@ let eval ld e =
   (*On verifie toutes les fonctions et attributs des classes*)
   Hashtbl.iter (fun a (d : classHash) ->
   let (super : string) = (match d.data.ext with | None -> ""; | Some x -> x;) in
-  checkAllClassMethodAndAttributs (d.data.nom) (d.attr) (d.meth) super Classe
+  checkAllMethodAndAttributs (d.data.nom) (d.attr) (d.meth) super Classe
   ) !table.classe;
 
   (*On verifie toutes les fonctions et attributs des objets*)
   
   Hashtbl.iter (fun a (d : objetHash) ->
-   checkAllClassMethodAndAttributs (d.data.nom) (d.attr) (d.meth) "" Objet
+  checkAllMethodAndAttributs (d.data.nom) (d.attr) (d.meth) "" Objet
    ) !table.objet;
   
-  (*TODO checkMain *)
+  (*Verifie le main *)
+  check_Main e;
 
   print_newline ();
   print_string "Verificated with success";

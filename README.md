@@ -1,8 +1,8 @@
 # ProjetCompilation
 TODO :
 
- - Autoriser a=a ou erreur d'execution ?
- - Check doublon attributs (deja fait ?)
- - Voir si on tolere les liste d'instructions/declarations vide
- - TOLERER DECLARATION VARIABLE THIS DANS initialisation attribut ?
- - RENOMMER eval en verification
+ - Autoriser a=a ou erreur d'execution ? (=> pas VC)
+ - Check doublon attributs
+ - Voir si c'est tolere les liste d'instructions/declarations vide
+ - tolerer declaration variable this dans initialisation attribut ? (=> Non pas VC)
+ - renommer eval en verification
