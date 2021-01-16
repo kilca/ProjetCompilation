@@ -1,3 +1,9 @@
+class A() is {
+  def A() is {}
+}
+class A() is {
+  def A() is {}
+}
 {
   true: Integer := 1;
   false: Integer := 0;

@@ -132,8 +132,8 @@ let rec remplirAPartirClasseParent (nom : string)  temp=
   begin
     let x = Hashtbl.find temp nom in
     match x.ext with
-    |Some a -> remplirClasse x (Some (remplirAPartirClasseParent a temp))
-    |None -> remplirClasse (Hashtbl.find temp nom) None
+    |Some a -> remplirClasse x (Some (remplirAPartirClasseParent a temp));
+    |None -> remplirClasse (Hashtbl.find temp nom) None;
   end
 ;;
 
@@ -158,7 +158,9 @@ let remplirTableCO c temp=
   match c with
   |Class x -> begin
       try
-      remplirAPartirClasseParent x.nom temp; ()
+      (*on ignore le retour, et on rempli a partir de la classe superParent *)
+      let _ = remplirAPartirClasseParent x.nom temp in
+      ()
       with Stack_overflow -> failwith "Extends Erreur, Extends Circulaire ?"
     end
   |Objet x -> remplirObjet x;
@@ -201,7 +203,7 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
   let (ou : choixBloc)= string_to_choixbloc lieu in
 
   match e with
-  Id (i : string) -> 
+  Id (i : string) -> (*si l'expression est un id*)
       if (i = "this") then
       begin
         if (ou = Main) then failwith ("this ne peut pas etre appele dans le main :"^lieu)
@@ -212,77 +214,77 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
         if (ou = Main || ou = Objet) then failwith ("super ne peut etre appelee que dans la classe:"^lieu)
         else begin
           let courant = Hashtbl.find !table.classe lieu in
-          match courant.data.ext with
+          match courant.data.ext with (*match classe extended *)
           None ->  failwith ("la classe parente appelee par super n existe pas")
           | Some x -> x
         end
       end
       else if (not (Hashtbl.mem variables i)) then failwith ("la variable "^i^ " n'existe pas dans le bloc de : ("^lieu^"?)")
       else (Hashtbl.find variables i).typ
-  | ClassID (ci : string) -> 
+  | ClassID (ci : string) -> (*si l'expression est un objet*)
     if (not (Hashtbl.mem !table.objet ci)) then failwith ("l'objet appele n'existe pas")  
     else ci
-  | Cste (c : constInt) -> "Integer"
-  | CsteStr (c : constString) -> "String"
-  | Plus (e1,e2) -> 
+  | Cste (c : constInt) -> "Integer" (*si l'expression est un int*)
+  | CsteStr (c : constString) -> "String" (*si l'expression est un string*)
+  | Plus (e1,e2) -> (*si l'expression est un +*)
     begin
       if (((expr_to_typestring e1 variables lieu) <> "Integer") 
       || ((expr_to_typestring e2 variables lieu) <> "Integer"))
       then failwith ("error the expression in plus must be integer in "^lieu)
       else "Integer"
     end
-  | Minus (e1,e2) ->
+  | Minus (e1,e2) -> (*si l'expression est un -*)
     begin
       if (((expr_to_typestring e1 variables lieu) <> "Integer") 
       || ((expr_to_typestring e2 variables lieu) <> "Integer"))
       then failwith ("error the expression in minus must be integer in "^lieu)
       else "Integer"
     end
-  | Times (e1,e2) ->
+  | Times (e1,e2) -> (*si l'expression est un * *)
     begin
       if (((expr_to_typestring e1 variables lieu) <> "Integer") 
       || ((expr_to_typestring e2 variables lieu) <> "Integer"))
       then failwith ("error the expression in times must be integer in "^lieu)
       else "Integer"
     end
-  | Div (e1,e2) ->
+  | Div (e1,e2) -> (*si l'expression est un / *)
     begin
       if (((expr_to_typestring e1 variables lieu) <> "Integer") 
       || ((expr_to_typestring e2 variables lieu) <> "Integer"))
       then failwith ("error the expression in div must be integer in "^lieu)
       else "Integer"
     end
-  | Concat (e1,e2) ->
+  | Concat (e1,e2) ->(*si l'expression est un & *)
     begin
       if (((expr_to_typestring e1 variables lieu) <> "String") 
       || ((expr_to_typestring e2 variables lieu) <> "String"))
       then failwith ("error the expression in times must be String in "^lieu)
       else "String"
     end
-  | UMinus e1 ->
+  | UMinus e1 ->(*si l'expression est un -a *) 
     begin
       if ((expr_to_typestring e1 variables lieu) <> "Integer") 
       then failwith ("error the expression in times must be Integer in "^lieu)
       else "Integer"
     end
-  | UPlus e1 ->
+  | UPlus e1 -> (*si l'expression est un +a *)
     begin
       if ((expr_to_typestring e1 variables lieu) <> "String")
       then failwith ("error the expression with plus before must be Integer in "^lieu)
       else "Integer"
     end
-  | Comp (o,e1,e2) ->
+  | Comp (o,e1,e2) -> (*si l'expression est un a==a*)
     if (((expr_to_typestring e1 variables lieu) <> "Integer") 
     || ((expr_to_typestring e2 variables lieu) <> "Integer"))
     then failwith ("error the expression in comparison must be Integer in "^lieu)
     else "Integer"
-  | Cast (s,e) -> 
+  | Cast (s,e) -> (*si l'expression est un (a as C)*)
     begin
       let typee = expr_to_typestring e variables lieu in
-      if (not (haveThisParent typee s)) then failwith ("error expression cannot be cast in "^s)
+      if ( (not (haveThisParent typee s)) || (typee<>s)) then failwith ("error expression"^typee^" cannot be cast in "^s^" at :"^lieu)
       else typee
     end
-  | Selec (e,s) ->
+  | Selec (e,s) -> (*si l'expression est un a.b*)
   begin
   let (sexpr : string) = expr_to_typestring e variables lieu in
   let (ousexpr : choixBloc) = string_to_choixbloc sexpr in
@@ -299,7 +301,7 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
         else failwith ("the attribute : "^s^" doesn't exist in "^objet.data.nom)
     | Main -> failwith ("cannot call an attribute from main (how did this happen ?)")
     end
-  | Call (e,s,el) ->
+  | Call (e,s,el) -> (*si l'expression est un a.f()*)
   begin
     let (sexpr : string) = expr_to_typestring e variables lieu in
     let (ousexpr : choixBloc) = string_to_choixbloc sexpr in
@@ -327,7 +329,7 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
         else failwith ("the attribute : "^s^" doesn't exist in "^objet.data.nom)
     | Main -> failwith ("cannot call a function from main (how did this happen ?)")
   end
-  | Inst (s,el) -> 
+  | Inst (s,el) ->  (*si l'expression est un new C()*)
   begin
     if (not (Hashtbl.mem !table.classe s)) then failwith ("la classe instantiee n'existe pas : "^s)
     else print_string "TODO Check param instantiation";s
@@ -341,6 +343,7 @@ let checkParamSuperConstructeur (super : superO) (variables : ((string, Ast.decl
   (*la verification du fait que le nom existe a deja ete fait implicitement 
   vu qu'il a verifie que le extend est bon et que super = extend
   *)
+
   let (constructorparent : consDecl) = (Hashtbl.find !table.classe nom).cons in
   if ((List.length constructorparent.para) <> (List.length param)) 
   then failwith ("error the number of arg of superconstructor called : "^nomClasse ^" doesn't match his class")
@@ -350,10 +353,9 @@ let checkParamSuperConstructeur (super : superO) (variables : ((string, Ast.decl
     if (a.typ <> (expr_to_typestring b variables nomClasse)) then failwith ("error the type of argument of supercons doesnt match : "^nomClasse)
     ) constructorparent.para param
   end
-
-
 ;;
 
+(*Todo check param var correcte ? (ou alors deja fait dans en tete classe ?) *)
 (*check si le constructeur de la classe a bien tout les memes parametres que la classe*)
 let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
   if ((List.length classeAttr.para) <> (List.length constr.para)) 
@@ -366,25 +368,22 @@ let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
   end
   ;
   if (constr.nom <> classeAttr.nom) then failwith "error the constructor must have the same name as the class (it shouldnt happen here)";
+  
+  (*on compare l'extend de la classe et le super du constructeur *)
   match (constr.superrr,classeAttr.ext) with
   None,None -> () (*si le constructeur n'a pas de parent et class n'a pas de parent *)
-  |Some x, None -> failwith ("there must be a extend in the class if there is in the constructor in "^classeAttr.nom)
-  |None, Some x -> failwith ("there must be a extend in the constructor if there is in the class in "^classeAttr.nom)
+  |Some x, None -> failwith ("there must be an extend in the class if there is in the constructor in "^classeAttr.nom)
+  |None, Some x -> failwith ("there must be an extend in the constructor if there is in the class in "^classeAttr.nom)
   |Some a, Some b ->(*si le constructeur a un parent et class a un parent *)
     let (nomSuper : string) = a.ex in
     let (nomExtend : string) = b in
     if (nomSuper <> nomExtend) then failwith ("super of constructor is different than the extend of the class : "^classeAttr.nom)
     else 
     begin
-    (* POUR TESTER *)
-    (*
-    print_string ("--- NOM :"^constr.nom);
-    print_newline ();
-    let (tabl : ((string, Ast.decl) Hashtbl.t)) = (Hashtbl.find (!table.classe) constr.nom).attr in
-    Hashtbl.iter (fun a b -> (print_string a;  print_newline ())) tabl;
-    *)
+    let variables = (Hashtbl.find !table.classe constr.nom).attr in
+    List.iter (fun (x : Ast.decl) -> if (not x.isVar) then Hashtbl.add variables x.lhs x) constr.para;
 
-    checkParamSuperConstructeur a ((Hashtbl.find !table.classe constr.nom).attr) constr.nom
+    checkParamSuperConstructeur a variables constr.nom
     end
 ;;
 
@@ -393,10 +392,17 @@ let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.de
   List.iter (fun x -> 
   if (x.lhs = "this") then failwith "error, can't create a variable with name this"
   else if (x.lhs = "super") then failwith "error, can't create a variable with name super"
-  begin
+  else
     Hashtbl.add variables x.lhs x
-  end
   ) declarations
+;;
+
+let checkAssignDeclaration (dec : Ast.decl) variables nomCO =
+  match dec.rhs with
+  | None -> ()
+  | Some x -> 
+  let nomTypeDroite = expr_to_typestring x variables nomCO in
+  if (nomTypeDroite <> dec.typ) then failwith ("erreur mauvais type d'init de variable : "^dec.lhs^" dans : "^nomCO)
 ;;
 
 (*fonction qui check le bloc de soit une methode de soit le main *)
@@ -407,9 +413,11 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
 
   (*Pour aider (attention marche pas si quelbloc est Main ou Objet)*)
   (*if quelbloc = Classe) then *)
+  (*
   let (currentClass : classHash) = Hashtbl.find !table.classe (fst infomethod) in
   let (currentMethod : Ast.funDecl) = Hashtbl.find currentClass.meth (snd infomethod) in
-  
+  *)
+
   let variablesLocales = Hashtbl.create 50 in
   ajouterDeclarations (fst bloc) variablesLocales;(*on ajoute les declarations locales du bloc *)
   let instructions = snd bloc in
@@ -437,15 +445,16 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
 ;;
 
 (*On teste toutes les methodes d'une classe *)
-let checkAllClassMethod (c :classHash) =
+(*c : classeHash ou objetHash *)
+(*typ : Classe ou Objet *)
+let checkAllClassMethodAndAttributs (nom : string) (attr) (funs) (super: string) (typ : choixBloc)=
 
-  let (nomClasse : string) = c.data.nom in
   (*fonction qui ajoute this*)
   let ajouterthis varcparam=
     let thisdecl =
       {
       lhs = "this";
-      typ= nomClasse; 
+      typ= nom; 
       isVar = false;(* a revoir *)
       rhs = None;
       } in 
@@ -453,38 +462,54 @@ let checkAllClassMethod (c :classHash) =
     in
   (*fonction qui ajoute super *)
   let ajoutersuper varcparam= 
-    match c.data.ext with
-    | None->();
-    | Some x -> 
-    begin
       let superdecl =
         {
         lhs = "super";
-        typ= x; 
+        typ= super; 
         isVar = false;(* a revoir *)
         rhs = None;
         } in 
-      Hashtbl.add varcparam "super" superdecl;
-    end
+      Hashtbl.add varcparam "super" superdecl; (*on ajoute super aux variables *)
   in
-  
-  let remplirVariablesEtCallCheckBloc (methpar : methParam) (fdec : Ast.funDecl) =
-    let variablesClassetParam = Hashtbl.copy c.attr in
-    (*on ajoute super et this aux varibles *)
-    ajouterthis variablesClassetParam;
-    ajoutersuper variablesClassetParam;
+
+  (*utilisee que pour les methodes *)
+  let remplirVariablesEtCallCheckBloc variables (methpar : methParam) (fdec : Ast.funDecl) =
 
     (*on verifie l'en tete de la fonction et on rempli*)
     List.iter (fun dec -> 
     begin
-      if (dec.isVar && not (Hashtbl.mem c.attr dec.lhs)) 
-      then failwith ("a parameter with var is not an attribute in : "^ (fst methpar)^ " at "^ nomClasse)
-      else Hashtbl.add variablesClassetParam dec.lhs dec
+      if (dec.isVar && not (Hashtbl.mem attr dec.lhs)) 
+      then failwith ("a parameter with var is not an attribute in : "^ (fst methpar)^ " at "^ nom)
+      else Hashtbl.add variables dec.lhs dec
     end
     ) fdec.para;
     (*on verifie le bloc de la fonction *)
-    checkBloc fdec.corp (nomClasse,methpar) variablesClassetParam Classe
-  in Hashtbl.iter (fun methpara fdec -> remplirVariablesEtCallCheckBloc methpara fdec) c.meth
+    checkBloc fdec.corp (nom,methpar) variables typ
+  in 
+
+  let variables2 = Hashtbl.copy attr in
+  (*on ajoute super et this aux varibles *)
+
+  ajouterthis variables2;
+  if (super <> "") then ajoutersuper variables2;
+
+
+  Hashtbl.iter (fun methpara fdec -> remplirVariablesEtCallCheckBloc variables2 methpara fdec) funs; (*on check le bloc des fonctions *)
+  Hashtbl.iter (fun s dec -> checkAssignDeclaration dec variables2 nom) attr (*on check les init des variables *)
+;;
+
+let check_ClasseObjet_duplicat ld =
+  let rec check tabl ld=
+    match ld with
+    | [] -> ()
+    | x::s ->
+    begin match x with
+      | Class c -> if (Hashtbl.mem tabl c.nom) then failwith ("erreur doublon de classe/objet : "^c.nom)
+                  else Hashtbl.add tabl c.nom "useless"; check tabl s
+      | Objet o -> if (Hashtbl.mem tabl o.nom) then failwith ("erreur doublon de classe/objet : "^o.nom)
+                  else Hashtbl.add tabl o.nom "useless"; check tabl s
+    end
+  in check (Hashtbl.create 50) ld
 ;;
 
 (*verifie l'entierete de l'ast (appele par main) *)
@@ -492,6 +517,8 @@ let eval ld e =
 
   (*on ajoute les classes Integer et String*)
   let nouvld = (ajouterClassesDefauts ld) in
+
+  check_ClasseObjet_duplicat nouvld;
 
   let tmp = Hashtbl.create 50 in
   List.iter (fun d ->   match d with
@@ -507,13 +534,18 @@ let eval ld e =
   (*on verifie tous les constructeur *)
   Hashtbl.iter (fun a (d : classHash) -> checkConstructeur d.data d.cons) !table.classe;
 
-  (*On verifie toutes les fonctions des classes*)
-  Hashtbl.iter (fun a d -> checkAllClassMethod d) !table.classe;
+  (*On verifie toutes les fonctions et attributs des classes*)
+  Hashtbl.iter (fun a (d : classHash) ->
+  let (super : string) = (match d.data.ext with | None -> ""; | Some x -> x;) in
+  checkAllClassMethodAndAttributs (d.data.nom) (d.attr) (d.meth) super Classe
+  ) !table.classe;
+
+  (*On verifie toutes les fonctions et attributs des objets*)
   
-  (*TODO (fait?) : check Constructor Method *)
-
-  (*TODO checkAllObjetMethod *)
-
+  Hashtbl.iter (fun a (d : objetHash) ->
+   checkAllClassMethodAndAttributs (d.data.nom) (d.attr) (d.meth) "" Objet
+   ) !table.objet;
+  
   (*TODO checkMain *)
 
   print_newline ();
