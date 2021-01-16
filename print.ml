@@ -34,7 +34,7 @@ let print_constString (p : Ast.constString)=
 let rec print_expType (e : Ast.expType) =
    match e with
        Id s -> print_string "ID[";print_string s;print_string "]"
-    | ClassID s -> print_string s
+    | ClassID s -> print_string "IDCLASS[";print_string s;print_string "]"
      | Cste i -> print_constInt i
      | CsteStr i -> print_constString i
      | Plus(g, d) ->

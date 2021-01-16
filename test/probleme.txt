@@ -1,3 +1,6 @@
 {
-  a : Integer := a.b();
+  true: Integer := 1;
+  false: Integer := 0;
+  is
+  Test.test();
 }

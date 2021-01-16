@@ -64,7 +64,7 @@ rule
 
 and
  quote buf = parse
-  '"'            { CSTESTRING (Ast.String (Buffer.contents buf)) }
+  | '"'            { CSTESTRING (Ast.String (Buffer.contents buf)) }
   | '\n'   { 
                     failwith "end of line not allowed"
                    }

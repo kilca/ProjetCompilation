@@ -109,7 +109,7 @@ expr:
   | e= expr DOT i=ID {Selec(e,i)}
   | e = delimited (LPAREN, expr, RPAREN) { e }
   | x=expr DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN) { Call (x,i,param) }
-  | x=CLASSID DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN)   { Call (CsteStr(String(x)),i,param) } (* ou plutot Cste->ID ? *)
+  | x=CLASSID DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN)   { Call (ClassID (x),i,param) } (* ou plutot Cste->ID ? *)
   | NEW i=CLASSID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN) {Inst(i,param)}
 
 (*le extends de classe *)
