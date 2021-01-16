@@ -11,7 +11,7 @@ let parse_with_error lexbuf file_in chan =
   try
     let codl, main = TpParse.prog TpLex.token lexbuf in (* classObjectDeclarationList, main programm function *)
     
-    (*Print.print_progType (codl, main);*)
+    Print.print_progType (codl, main);
     Eval.eval codl main;
     Compil.compile codl main chan;
     
@@ -29,7 +29,7 @@ let _ =
       (* si on ne passe pas à l'appel le nom du fichier dans lequel
        * ecrire le code produit, on utilise par défaut le fichier "out.txt"
        *)
-      let file_out = if argc = 3 then Sys.argv.(2) else "out.txt"
+      let file_out = if argc = 3 then Sys.argv.(2) else "out.cfvs" (* cfvs ; Compiled Frederic Voisin's Script *)
       and file_in = Sys.argv.(1) in
       let chan_in = open_in file_in
       and chan_out = open_out file_out in
