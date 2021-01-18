@@ -32,17 +32,14 @@ let cptEtiITE = ref 0;; (* compteur: Instruction globale *)
 let cptEtiMeth = ref 0;; (* compteur : Declaration globale *)
 
 let makeEtiMethod nomMethode = (* generateur d'etiquettes fraiches pour methodes *)
-  let v = !cptEtiMeth in
-  let sv = string_of_int v in
-  cptEtiMeth := v + 1;
-  "Method." ^ sv ^ " --" ^ nomMethode
+  cptEtiMeth := !cptEtiMeth + 1;
+  "Method." ^ (string_of_int !cptEtiMeth) ^ " --" ^ nomMethode
 ;;
 
 let makeEtiITE () = (* generateur d'etiquettes fraiches pour ITE *)
-  let v = !cptEtiITE in
-  let sv = string_of_int v in
-  cptEtiITE := v + 1;
-  ("ELSE" ^ sv, "FINIF" ^ sv)  (* ^ est l'operateur de concatenation de strings *)
+  let sv = string_of_int !cptEtiITE in
+  cptEtiITE := !cptEtiITE + 1;
+  ("ELSE" ^ sv, "ENDIF" ^ sv)  (* ^ est l'operateur de concatenation de strings *)
 ;;
 
 (* TODO : donner le type de l'expression *)
@@ -65,20 +62,14 @@ let find_eti_methode nom nomMethode parametres =
 ;;
 
 (*rempli les classCode et objectCode de !table.class et !table.object *)
-let remplirClassesObjet co =
-  match co with
-    Objet o ->
-          Hashtbl.add !table.objet
-            o.nom
-            {
+let fillObject o =
+  Hashtbl.add !table.objet o.nom {
               data = o;
               attrIndex = Hashtbl.create 50;
               methEti = Hashtbl.create 50;
             }
-  | Class c ->
-            Hashtbl.add !table.classe
-            c.nom
-            {
+and fillClass (c : Ast.classDecl) =
+  Hashtbl.add !table.classe c.nom {
               data = c;
               attrIndex = Hashtbl.create 50;
               methEti = Hashtbl.create 50;
@@ -115,21 +106,23 @@ and compileClassMember cm env chan =
   | Att d -> compileAttrib (compileDecl d env chan) chan
 
 
+and compileLClassMember lcm env chan =
+  match lcm with
+    [] -> env
+  | he::ta -> compileLClassMember ta (compileClassMember he env chan) chan
+
+
 (* obj : object, env : environment (structure abstraite), chan : string buffer *)
 and compileObject obj env chan =
-  let rec compileLClassMember lcm env chan =
-    match lcm with
-      [] -> env
-      | he::ta -> compileLClassMember ta (compileClassMember he env chan) chan
-  in
   output_string chan "-- compileObject\n";
-  obj.nom::env;
+  fillObject obj;
   compileLClassMember obj.cbl env chan
 
 
 (* cls : class, env : environment (structure abstraite), chan : string buffer *)
 and compileClass cls env chan =
   output_string chan "-- compileClass\n";
+  fillClass cls;
   (* on appelera makeEtiMeth *)
 
   env
@@ -193,10 +186,11 @@ and compileExpr exp env chan  =
                     env
   | Selec (e, s) -> output_string chan "\t\t-- selec\n";
                     env
-  | Call (e, s, el) -> List.iter (fun ex -> compileExpr ex env chan) el;
+  | Call (e, s, el) -> (*List.iter (fun ex -> compileExpr ex env chan) el;
                        let nomCO = "..." in (*TODO : trouver nom classe objet de e *)
                        let eti = find_eti_methode nomCO s el in
-                       output_string chan ("CALL " ^ eti ^ "\n")
+                       output_string chan ("CALL " ^ eti ^ "\n");*)
+                       env
   | Inst (s, el) -> output_string chan "\t\t-- inst\n";
                     env
 
@@ -276,7 +270,6 @@ and compileBloc bl env chan =
 
 
 let compile codl main chan =
-
   let rec compileLCO codl env =
     let compileClassOrObj co env chan =
       match co with
@@ -290,7 +283,7 @@ let compile codl main chan =
     compileBloc main env chan
   in
   output_string chan "START\n";
-  compileMain main (compileLCO codl []) chan;
+  compileMain main (compileLCO codl ()) chan;
   output_string chan "STOP\n";
   flush chan;
   close_out chan;
