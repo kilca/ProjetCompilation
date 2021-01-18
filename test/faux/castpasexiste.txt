@@ -1,5 +1,6 @@
 {
-   truc : Integer := b as A
-      is 
+   truc : Integer;
+   is 
+   truc := (as A : truc);
    2;
 }
