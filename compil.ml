@@ -116,6 +116,7 @@ and compileLClassMember lcm env chan =
 and compileObject obj env chan =
   output_string chan "-- compileObject\n";
   fillObject obj;
+  (* obj.nom::env; *)
   compileLClassMember obj.cbl env chan
 
 
