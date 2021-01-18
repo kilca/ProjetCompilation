@@ -9,4 +9,5 @@ class A() is {
   false: Integer := 0;
   is
   Test.test();
+  
 }

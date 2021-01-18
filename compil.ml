@@ -18,9 +18,11 @@ and compileExpr exp env chan  =
   match exp with
     Id s -> output_string chan "\t\t-- Id\n";
   | ClassID s -> output_string chan "\t\t-- ClassID\n";
-  | Cste i -> -> output_string chan "\t\t-- constInt\n";
+  | Cste i -> output_string chan "\t\t-- constInt\n";
   | CsteStr s -> output_string chan "\t\t-- constString\n";
-  | Plus (e1, e2) -> output_string chan "\t\t-- Plus\n";
+  | Plus (e1, e2) -> compileExpr e1 env chan; 
+                    compileExpr e2 env chan; 
+                    output_string chan "ADD\n";
   | Minus (e1, e2) -> output_string chan "\t\t-- Minus\n";
   | Times (e1, e2) -> output_string chan "\t\t-- Times\n";
   | Div (e1, e2) -> output_string chan "\t\t-- Div\n";
