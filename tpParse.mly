@@ -4,9 +4,8 @@ open Ast
 %}
 %token <string> ID
 %token <string> CLASSID
-%token <Ast.constInt> CSTEINT
-%token <Ast.constString> CSTESTRING
-
+%token <int> CSTEINT
+%token <string> CSTESTRING
 
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV

@@ -19,6 +19,7 @@ type classHash = {
   cons : Ast.consDecl
 };;
 
+
 type objetHash = {
   data : Ast.objetDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
@@ -224,8 +225,8 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
   | ClassID (ci : string) -> (*si l'expression est un objet*)
     if (not (Hashtbl.mem !table.objet ci)) then failwith ("l'objet appele n'existe pas")  
     else ci
-  | Cste (c : constInt) -> "Integer" (*si l'expression est un int*)
-  | CsteStr (c : constString) -> "String" (*si l'expression est un string*)
+  | Cste (c : int) -> "Integer" (*si l'expression est un int*)
+  | CsteStr (c : string) -> "String" (*si l'expression est un string*)
   | Plus (e1,e2) -> (*si l'expression est un +*)
     begin
       if (((expr_to_typestring e1 variables lieu) <> "Integer") 
