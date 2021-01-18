@@ -33,7 +33,7 @@ let makeEtiMethod nomMethode= (* generateur d'etiquettes fraiches pour methodes 
   let v = !cptEtiMeth in
   let sv = string_of_int v in
   cptEtiMeth := v + 1;
-  "Method."^sv^ " --"^nomMethode
+  "METHOD"^sv^ " --"^nomMethode
 ;;
 
 let makeEtiITE () = (* generateur d'etiquettes fraiches pour ITE *)
@@ -64,6 +64,7 @@ let find_eti_methode nom nomMethode parametres =
   end
 ;;
 
+(*rempli les classCode et objectCode de !table.class et !table.object *)
 let remplirClassesObjet co =
   match co with
   | Objet o ->
