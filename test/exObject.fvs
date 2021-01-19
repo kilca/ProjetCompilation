@@ -1,5 +1,7 @@
-object NomObjet is {          /* Compteur d'instances de Point */
-  var nomAttribut : Integer := 0;   /* indice de la prochaine instance de Point */
+object NomObjet is {          
+  var nomAttribut : String := "coucou";   
 }
+/* pour l'instant gere pas plusieurs attributs/objet car ne peut savoir lequel est-ce dans compile */
 {
+  NomObjet.nomAttribut.print();
 }

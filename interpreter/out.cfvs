@@ -1,13 +1,10 @@
 START
-PUSHS "Hellow Word !"
-WRITES 
-PUSHS " \n " 
-WRITES 
-PUSHI 2
-STR 
-WRITES 
-PUSHS " \n " 
-WRITES 
-PUSHS "fin test"
+   -- compileObject NomObjet
+ALLOC 1-- On alloue nb declarations
+DUPN 1
+PUSHS "coucou"
+STORE 0
+PUSHG 0 -- On empile l'adresse de NomObjet
+LOAD 0 -- On charge l'attribut nomAttribut
 WRITES 
 STOP

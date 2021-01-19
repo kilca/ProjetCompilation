@@ -9,6 +9,7 @@ let table = Eval.table;;
 
 let cptEtiITE = ref 0;; (* compteur: Instruction globale *)
 let cptEtiMeth = ref 0;; (* compteur : Declaration globale *)
+let cptIdCO = ref 0;; (* compteur : id Classe et Object globale *)
 
 let makeEtiMethod nomMethode = (* generateur d'etiquettes fraiches pour methodes *)
   cptEtiMeth := !cptEtiMeth + 1;
@@ -40,11 +41,27 @@ let rec findMethodType (nomCO :string) (nomMethode : string) (args : Ast.expType
         |Some x -> x
     end
 
-(* TODO : donner le type de l'expression *)
+and findAttributType (nomCO :string) (nomAttribut : string) =
+  if (Hashtbl.mem !table.objet nomCO) then (*si c'est un objet*)
+    begin
+      let objetH = Hashtbl.find !table.objet nomCO in
+      let attr = Hashtbl.find objetH.attr nomAttribut in
+      attr.typ
+    end
+  else (*sinon on considere que c'est une classe *)
+    begin
+      let classeH = Hashtbl.find !table.classe nomCO in
+      let attr = Hashtbl.find classeH.attr nomAttribut in
+      attr.typ
+    end
+
+(* TODO : donner le type de l'expression 
+  devra probablement prendre plus tard un autre arg env
+*)
 and expr_to_string exp =
   match exp with
-    Id  i -> "" (*TODO*)
-  | ClassID i -> "" (*TODO*)
+    Id  i -> i (*TODO*)
+  | ClassID i -> i (*TODO*)
   | Cste _ -> "Integer"
   | CsteStr _-> "String"
   | Plus _-> "Integer"
@@ -56,7 +73,7 @@ and expr_to_string exp =
   | UPlus _-> "Integer"
   | Comp _-> "Integer"
   | Cast (s,e) -> s (*TODO ?*)
-  | Selec (e,s) -> "" (*TODO*)
+  | Selec (e,s) -> findAttributType (expr_to_string e) s (*TODO chose en plus?*) 
   | Call (e,s,el)-> findMethodType (expr_to_string e) s el(*TODO chose en plus?*) 
   | Inst (s,el)-> "" (*TODO*)
 
@@ -159,6 +176,8 @@ and compileObject obj env chan =
   
   (*a mettre dans compileClassMember? *)  
   let currentHash = Hashtbl.find !table.objet obj.nom in
+  currentHash.index := !cptIdCO;
+  cptIdCO := !cptIdCO + 1;
   let nombreAttribut = Hashtbl.length currentHash.attr in
   let nombreAttributStr = string_of_int nombreAttribut in
 
@@ -175,14 +194,16 @@ and compileClass cls env chan =
   compileLDecl cls.para env chan;
   compileLClassMember cls.cbl env chan
 
-(*Techniquement les String et Integer seraient pas gerees comme des classes ? *)
+(*PS : pour l'instant seul le cas Object est geree*)
 (* exp : expType *)
 and compileExpr exp env chan  =
 (* output_string chan "\t\t-- compileExpr\n"; *)
   match exp with
     Id s -> output_string chan "\t\t\t-- Id\n";
             env
-  | ClassID s -> output_string chan "\t\t\t-- ClassID\n";
+  | ClassID s -> 
+                let indexObjet = (Hashtbl.find !table.objet s).index in
+                output_string chan ("PUSHG "^(string_of_int !indexObjet)^" -- On empile l'adresse de "^s^"\n");
                  env
   | Cste i -> output_string chan "PUSHI ";
               output_string chan (string_of_int i);
@@ -232,7 +253,12 @@ and compileExpr exp env chan  =
                       end
   | Cast (s, el) -> output_string chan "\t\t\t-- cast\n";
                     env
-  | Selec (e, s) ->
+  | Selec (e, s) -> (*Todo : seul le cas object est geree *)
+                    let nomObjet = expr_to_string e in
+                    let objetHash = Hashtbl.find !table.objet nomObjet in
+                    let idAttr = Hashtbl.find objetHash.attrIndex s in
+                    compileExpr e env chan (*Todo? utiliser retour ?*);
+                    output_string chan ("LOAD "^(string_of_int idAttr)^" -- On charge l'attribut "^s^"\n");
                     
                     env
   | Call (e, s, el) ->
@@ -240,6 +266,7 @@ and compileExpr exp env chan  =
                       let expType = expr_to_string e in
                       match expType with
                       | "String" ->
+                                  
                                     if (s = "print") then 
                                     begin
                                       compileExpr e env chan;
@@ -259,7 +286,8 @@ and compileExpr exp env chan  =
                                     compileExpr e env chan;
                                     output_string chan ("STR \n");
                                     env
-                      | _-> 
+                      | _->  (*Todo *)
+                      
                                 (*List.iter (fun ex -> compileExpr ex env chan) el;
                                   let nomCO = "..." in (*TODO : trouver nom classe objet de e *)
                                   let eti = find_eti_methode nomCO s el in
