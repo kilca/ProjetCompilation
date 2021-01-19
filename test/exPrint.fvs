@@ -1,0 +1,5 @@
+{
+  "Hello Word !".println();
+  2.toString().println();
+  "fin test".print();
+}

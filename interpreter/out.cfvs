@@ -1,0 +1,13 @@
+START
+PUSHS "Hellow Word !"
+WRITES 
+PUSHS " \n " 
+WRITES 
+PUSHI 2
+STR 
+WRITES 
+PUSHS " \n " 
+WRITES 
+PUSHS "fin test"
+WRITES 
+STOP

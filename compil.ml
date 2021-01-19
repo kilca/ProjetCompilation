@@ -21,9 +21,44 @@ let makeEtiITE () = (* generateur d'etiquettes fraiches pour ITE *)
   ("ELSE : NOP" ^ sv, "ENDIF : NOP" ^ sv)  (* ^ est l'operateur de concatenation de strings *)
 ;;
 
+let rec findMethodType (nomCO :string) (nomMethode : string) (args : Ast.expType list) =
+  let argsString = List.map (fun x -> expr_to_string x) args in
+  if (Hashtbl.mem !table.objet nomCO) then (*si c'est un objet*)
+    begin
+      let objetH = Hashtbl.find !table.objet nomCO in
+      let meth = Hashtbl.find objetH.meth (nomMethode,argsString) in
+      match meth.typ with
+        |None -> ""
+        |Some x -> x
+    end
+  else (*sinon on considere que c'est une classe *)
+    begin
+      let classeH = Hashtbl.find !table.classe nomCO in
+      let meth = Hashtbl.find classeH.meth (nomMethode,argsString) in
+      match meth.typ with
+        |None -> ""
+        |Some x -> x
+    end
 
 (* TODO : donner le type de l'expression *)
-let expr_to_string e = "String";;
+and expr_to_string exp =
+  match exp with
+    Id  i -> "" (*TODO*)
+  | ClassID i -> "" (*TODO*)
+  | Cste _ -> "Integer"
+  | CsteStr _-> "String"
+  | Plus _-> "Integer"
+  | Minus _-> "Integer"
+  | Times _-> "Integer"
+  | Div _-> "Integer"
+  | Concat _-> "String"
+  | UMinus _-> "Integer"
+  | UPlus _-> "Integer"
+  | Comp _-> "Integer"
+  | Cast (s,e) -> s (*TODO ?*)
+  | Selec (e,s) -> "" (*TODO*)
+  | Call (e,s,el)-> findMethodType (expr_to_string e) s el(*TODO chose en plus?*) 
+  | Inst (s,el)-> "" (*TODO*)
 
 (*[!] Todo : prendre en compte l'heritage *)
 (* trouve l'etiquette a partir de la methode *)
@@ -153,9 +188,9 @@ and compileExpr exp env chan  =
               output_string chan (string_of_int i);
               output_string chan "\n";
               env
-  | CsteStr s -> output_string chan "PUSHS ";
+  | CsteStr s -> output_string chan "PUSHS \"";
                  output_string chan s;
-                 output_string chan "\n";
+                 output_string chan "\"\n";
                  env
   | Plus (e1, e2) -> compileExpr e1 env chan;
                      compileExpr e2 env chan;
@@ -200,11 +235,37 @@ and compileExpr exp env chan  =
   | Selec (e, s) ->
                     
                     env
-  | Call (e, s, el) -> (*List.iter (fun ex -> compileExpr ex env chan) el;
-                       let nomCO = "..." in (*TODO : trouver nom classe objet de e *)
-                       let eti = find_eti_methode nomCO s el in
-                       output_string chan ("CALL " ^ eti ^ "\n");*)
-                       env
+  | Call (e, s, el) ->
+                      begin
+                      let expType = expr_to_string e in
+                      match expType with
+                      | "String" ->
+                                    if (s = "print") then 
+                                    begin
+                                      compileExpr e env chan;
+                                      output_string chan ("WRITES \n");
+                                      env
+                                    end
+                                    else if (s = "println") then
+                                    begin
+                                      compileExpr e env chan;
+                                      output_string chan ("WRITES \n");
+                                      output_string chan ("PUSHS \" \\n \" \n");
+                                      output_string chan ("WRITES \n"); 
+                                      env 
+                                    end
+                      | "Integer" ->
+                                    if (s = "toString") then
+                                    compileExpr e env chan;
+                                    output_string chan ("STR \n");
+                                    env
+                      | _-> 
+                                (*List.iter (fun ex -> compileExpr ex env chan) el;
+                                  let nomCO = "..." in (*TODO : trouver nom classe objet de e *)
+                                  let eti = find_eti_methode nomCO s el in
+                                  output_string chan ("CALL " ^ eti ^ "\n");*)
+                                  env
+                      end
   | Inst (s, el) -> output_string chan "\t\t\t-- inst\n";
                     env
 
