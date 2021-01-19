@@ -81,25 +81,25 @@ and fillClass (c : Ast.classDecl) =
 
 
 let rec compileFunDecl f env chan =
-  output_string chan "-- compileFunDecl\n";
+  output_string chan "\t\t-- compileFunDecl\n";
 
   env
 
 
 and compileConsDecl c env chan =
-  output_string chan "-- compileConsDecl\n";
+  output_string chan "\t\t-- compileConsDecl\n";
 
   env
 
 
 and compileAttrib env chan =
-  output_string chan "-- compileAttrib\n";
+  output_string chan "\t\t-- compileAttrib\n";
 
   env
 
 
 and compileClassMember cm env chan =
-  output_string chan "-- compileClassMember\n";
+  output_string chan "\t-- compileClassMember\n";
   match cm with
     Fun f -> compileFunDecl f env chan
   | Con c -> compileConsDecl c env chan
@@ -125,17 +125,17 @@ and compileClass cls env chan =
   output_string chan "-- compileClass\n";
   fillClass cls;
   (* on appelera makeEtiMeth *)
-
-  env
+  compileLDecl cls.para env chan;
+  compileLClassMember cls.cbl env chan
 
 
 (* exp : expType *)
 and compileExpr exp env chan  =
 (* output_string chan "\t\t-- compileExpr\n"; *)
   match exp with
-    Id s -> output_string chan "\t\t-- Id\n";
+    Id s -> output_string chan "\t\t\t-- Id\n";
             env
-  | ClassID s -> output_string chan "\t\t-- ClassID\n";
+  | ClassID s -> output_string chan "\t\t\t-- ClassID\n";
                  env
   | Cste i -> output_string chan "PUSHI ";
               output_string chan (string_of_int i);
@@ -183,16 +183,16 @@ and compileExpr exp env chan  =
                         | Ge ->   output_string chan "SUPEQ\n"
                         ; env
                       end
-  | Cast (s, el) -> output_string chan "\t\t-- cast\n";
+  | Cast (s, el) -> output_string chan "\t\t\t-- cast\n";
                     env
-  | Selec (e, s) -> output_string chan "\t\t-- selec\n";
+  | Selec (e, s) -> output_string chan "\t\t\t-- selec\n";
                     env
   | Call (e, s, el) -> (*List.iter (fun ex -> compileExpr ex env chan) el;
                        let nomCO = "..." in (*TODO : trouver nom classe objet de e *)
                        let eti = find_eti_methode nomCO s el in
                        output_string chan ("CALL " ^ eti ^ "\n");*)
                        env
-  | Inst (s, el) -> output_string chan "\t\t-- inst\n";
+  | Inst (s, el) -> output_string chan "\t\t\t-- inst\n";
                     env
 
 
@@ -232,7 +232,7 @@ and compileAssign exp1 exp2 env chan  =
 
 
 and compileInstr i env chan  =
-(* output_string chan "\t-- compileInstr\n"; *)
+(* output_string chan "\t\t-- compileInstr\n"; *)
   match i with
     Expr exp -> compileExpr exp env chan
   | Bloc bl -> compileBloc bl env chan
@@ -249,19 +249,21 @@ and compileInstr i env chan  =
 (* d : current declaration, env : environment, chan : buffer *)
 (*TODO  : pour l'instant modifie pas env*)
 and compileDecl d env chan  =
-  output_string chan "\t-- compileDecl\n";
+  output_string chan "\t\t-- compileDecl\n";
 
   env
 
 
-and compileBloc bl env chan =
-  let (ld, li) = bl in
-(* output_string chan "\tcompileBloc\n"; *)
-  let rec compileLDecl ld env chan =
+and compileLDecl ld env chan =
     match ld with
       [] -> env
     | he::ta -> compileLDecl ta (compileDecl he env chan) chan
-  and compileLInstr li env chan =
+
+
+and compileBloc bl env chan =
+  let (ld, li) = bl in
+(* output_string chan "compileBloc\n"; *)
+  let rec compileLInstr li env chan =
     match li with
       [] -> env
     | he::ta -> compileLInstr ta (compileInstr he env chan) chan
