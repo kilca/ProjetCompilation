@@ -5,45 +5,25 @@ open Ast
 
 type methParam = string*string list;;
 
-(* peut etre rajouter attributs et meth comme dans eval *)
-type classCode = {
-  data : Ast.classDecl;
-  attrIndex : ((string, int) Hashtbl.t);
-  methEti : ((methParam, string) Hashtbl.t);
-  (* ajouter constructeur *)
-};;
+let table = Eval.table;;
 
-type objectCode = {
-  data : Ast.objetDecl;
-  attrIndex : ((string, int) Hashtbl.t);
-  methEti : ((methParam, string) Hashtbl.t);
-};;
-
-type tableCO = {
-  mutable classe : ((string, classCode) Hashtbl.t);
-  mutable objet : ((string, objectCode) Hashtbl.t);
-};;
-
-let table = ref {
-  classe = Hashtbl.create 50;
-  objet = Hashtbl.create 50;
-};;
 let cptEtiITE = ref 0;; (* compteur: Instruction globale *)
 let cptEtiMeth = ref 0;; (* compteur : Declaration globale *)
 
 let makeEtiMethod nomMethode = (* generateur d'etiquettes fraiches pour methodes *)
   cptEtiMeth := !cptEtiMeth + 1;
-  "Method." ^ (string_of_int !cptEtiMeth) ^ " --" ^ nomMethode
+  "METHOD" ^ (string_of_int !cptEtiMeth) ^ ": NOP --" ^ nomMethode
 ;;
 
 let makeEtiITE () = (* generateur d'etiquettes fraiches pour ITE *)
   let sv = string_of_int !cptEtiITE in
   cptEtiITE := !cptEtiITE + 1;
-  ("ELSE" ^ sv, "ENDIF" ^ sv)  (* ^ est l'operateur de concatenation de strings *)
+  ("ELSE : NOP" ^ sv, "ENDIF : NOP" ^ sv)  (* ^ est l'operateur de concatenation de strings *)
 ;;
 
+
 (* TODO : donner le type de l'expression *)
-let expr_to_string e = "";;
+let expr_to_string e = "String";;
 
 (*[!] Todo : prendre en compte l'heritage *)
 (* trouve l'etiquette a partir de la methode *)
@@ -51,17 +31,18 @@ let find_eti_methode nom nomMethode parametres =
   let paramTypes = List.map (fun x -> expr_to_string x) parametres in
   if (Hashtbl.mem !table.classe nom) then
     begin
-      let (cCode : classCode) = Hashtbl.find !table.classe nom in
+      let (cCode : Eval.classHash) = Hashtbl.find !table.classe nom in
       Hashtbl.find cCode.methEti (nomMethode,paramTypes)
     end
   else
     begin
-      let (oCode : objectCode) = Hashtbl.find !table.objet nom in
+      let (oCode : Eval.objetHash) = Hashtbl.find !table.objet nom in
       Hashtbl.find oCode.methEti (nomMethode,paramTypes)
     end
 ;;
 
 (*rempli les classCode et objectCode de !table.class et !table.object *)
+(*
 let fillObject o =
   Hashtbl.add !table.objet o.nom {
               data = o;
@@ -75,8 +56,7 @@ and fillClass (c : Ast.classDecl) =
               methEti = Hashtbl.create 50;
             }
 ;;
-
-
+*)
 (* ----------------------  Corp Generation Code ------------------------------ *)
 
 
@@ -88,13 +68,24 @@ let rec compileFunDecl f env chan =
 
 and compileConsDecl c env chan =
   output_string chan "\t\t-- compileConsDecl\n";
-
   env
 
 
 and compileAttrib env chan =
-  output_string chan "\t\t-- compileAttrib\n";
+  (*output_string chan "\t\t-- compileAttrib\n";*)
+  
+  (*TODO recuperer le nom de l'objet/classe et le nom de l'attribut afin de faire : *)
+  (* --- Exemple ----*)
+  let nomAttribut = "nomAttribut" in
+  let nomObjet = "NomObjet" in
 
+  let currObjet = (Hashtbl.find (!table.objet) nomObjet) in
+  let currId = currObjet.attrCpt in
+  let currIdStr = string_of_int (!currId) in
+  Hashtbl.add currObjet.attrIndex nomAttribut !currId;
+
+  output_string chan ("STORE "^currIdStr^"\n");
+  currObjet.attrCpt := !(currObjet.attrCpt) + 1;
   env
 
 
@@ -111,24 +102,45 @@ and compileLClassMember lcm env chan =
     [] -> env
   | he::ta -> compileLClassMember ta (compileClassMember he env chan) chan
 
+(*j'ai mis dans une fonction a par au cas ou mais peut etre pareil que classe *)
+and compileObjectMember cm env chan =
+match cm with
+  Fun f -> compileFunDecl f env chan
+| Con c -> compileConsDecl c env chan
+| Att d -> compileAttrib (compileDecl d env chan) chan
+
+
+and compileLObjectMember lcm env chan =
+match lcm with
+  [] -> env
+| he::ta -> 
+output_string chan "DUPN 1\n";(*on dupplique l'adresse de l'objet pour la store *)
+compileLObjectMember ta (compileObjectMember he env chan) chan
 
 (* obj : object, env : environment (structure abstraite), chan : string buffer *)
 and compileObject obj env chan =
-  output_string chan "-- compileObject\n";
-  fillObject obj;
-  (* obj.nom::env; *)
-  compileLClassMember obj.cbl env chan
+  
+  output_string chan ("   -- compileObject "^obj.nom^"\n");
+  
+  (*a mettre dans compileClassMember? *)  
+  let currentHash = Hashtbl.find !table.objet obj.nom in
+  let nombreAttribut = Hashtbl.length currentHash.attr in
+  let nombreAttributStr = string_of_int nombreAttribut in
+
+  output_string chan ("ALLOC "^nombreAttributStr^"-- On alloue nb declarations\n");
+  compileLObjectMember (obj.cbl) env chan;
+  env
 
 
 (* cls : class, env : environment (structure abstraite), chan : string buffer *)
 and compileClass cls env chan =
   output_string chan "-- compileClass\n";
-  fillClass cls;
+  (*fillClass cls;*)
   (* on appelera makeEtiMeth *)
   compileLDecl cls.para env chan;
   compileLClassMember cls.cbl env chan
 
-
+(*Techniquement les String et Integer seraient pas gerees comme des classes ? *)
 (* exp : expType *)
 and compileExpr exp env chan  =
 (* output_string chan "\t\t-- compileExpr\n"; *)
@@ -185,7 +197,8 @@ and compileExpr exp env chan  =
                       end
   | Cast (s, el) -> output_string chan "\t\t\t-- cast\n";
                     env
-  | Selec (e, s) -> output_string chan "\t\t\t-- selec\n";
+  | Selec (e, s) ->
+                    
                     env
   | Call (e, s, el) -> (*List.iter (fun ex -> compileExpr ex env chan) el;
                        let nomCO = "..." in (*TODO : trouver nom classe objet de e *)
@@ -249,8 +262,10 @@ and compileInstr i env chan  =
 (* d : current declaration, env : environment, chan : buffer *)
 (*TODO  : pour l'instant modifie pas env*)
 and compileDecl d env chan  =
-  output_string chan "\t\t-- compileDecl\n";
-
+  (*output_string chan "\t\t-- compileDecl\n";*)
+  match d.rhs with
+  |Some e -> compileExpr e env chan
+  | None -> (*???*)
   env
 
 

@@ -15,7 +15,7 @@
 	PUSHI 3
 	STORE 0
 -- start
-	JUMP start
+*	JUMP start
 -- la fonction qui prend deux entiers en parametre et retourne leur somme
 -- La fonction a un "point d'arret" qui arretera l'execution du code juste
 -- avant

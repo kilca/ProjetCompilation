@@ -1,0 +1,5 @@
+object NomObjet is {          /* Compteur d'instances de Point */
+  var nomAttribut : Integer := 0;   /* indice de la prochaine instance de Point */
+}
+{
+}

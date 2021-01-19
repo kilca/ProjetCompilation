@@ -16,7 +16,11 @@ type classHash = {
   data : Ast.classDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
   meth : ((methParam, Ast.funDecl) Hashtbl.t);
-  cons : Ast.consDecl
+  cons : Ast.consDecl;
+
+  attrCpt : int ref;
+  attrIndex : ((string, int) Hashtbl.t);
+  methEti : ((methParam, string) Hashtbl.t);
 };;
 
 
@@ -24,6 +28,10 @@ type objetHash = {
   data : Ast.objetDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
   meth : ((methParam, Ast.funDecl) Hashtbl.t);
+
+  attrCpt : int ref;
+  attrIndex : ((string, int) Hashtbl.t);
+  methEti : ((methParam, string) Hashtbl.t);
 };;
 
 type tableCO = 
@@ -116,7 +124,9 @@ let remplirClasse (x: classDecl) (parent: classHash option)=
     let c = !co in
     match c with
     |None ->failwith ("error there is no constructor in "^x.nom)
-    |Some sc -> Hashtbl.add !table.classe x.nom {data=x;attr=atable;meth=mtable;cons=sc};
+    |Some sc -> Hashtbl.add !table.classe x.nom 
+                {data=x;attr=atable;meth=mtable;cons=sc;
+                attrIndex= Hashtbl.create 50;methEti = Hashtbl.create 50;attrCpt = ref 0};
                 Hashtbl.find !table.classe x.nom
 
 ;;
@@ -151,7 +161,9 @@ let remplirObjet (x : Ast.objetDecl)=
     | Fun e -> ajouterMeth e mtable
     | Con e -> failwith "error constructor in object (??error should have happened in syntax)"
   ) x.cbl;
-  Hashtbl.add !table.objet x.nom {data=x;attr=atable;meth=mtable}
+  Hashtbl.add !table.objet x.nom {data=x;attr=atable;meth=mtable;
+  attrIndex= Hashtbl.create 50;methEti = Hashtbl.create 50;
+  attrCpt = ref 0}
 ;;
 
 (*on rempli !table.classe et !table.objet *)
