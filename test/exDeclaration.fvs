@@ -3,8 +3,15 @@
  b : String := "bbbbb";
  c : String := "ccccc";
   is
- if (2 = 2) 
- then "dans then".println();
- else "dans else".println();
+{
+    a: String := "AAAAA";
+    is
+    a.println();
+    b.println();
+    c.println();
+}
+    a.println();
+    b.println();
+    c.println();
 
 }

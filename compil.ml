@@ -416,7 +416,7 @@ and compileInstr i (env : envT) chan  =
 (* output_string chan "\t\t-- compileInstr\n"; *)
   match i with
     Expr exp -> compileExpr exp env chan
-  | Bloc bl -> compileBloc bl env chan
+  | Bloc bl -> compileBloc bl (Hashtbl.copy env) chan
   | Return exp -> 
                 begin
                 match exp with
@@ -455,12 +455,12 @@ and compileLDecl ld (env : envT) chan =
 (*env : variables locales*)
 and compileBloc bl (env : envT) chan =
   let (ld, li) = bl in
-  let rec compileLInstr li (env : envT) chan =
+  let rec compileLInstr li (en : envT) chan =
     match li with
       [] -> env
-    | he::ta -> compileLInstr ta (compileInstr he env chan) chan
+    | he::ta -> compileLInstr ta (compileInstr he en chan) chan
   in
-  let tempEnv = (compileLDecl ld env chan) in
+  let tempEnv = compileLDecl ld (Hashtbl.copy env) chan in
   compileLInstr li tempEnv chan
 ;;
 
