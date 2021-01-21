@@ -1,15 +1,13 @@
 # ProjetCompilation
-TODO :
 
- - Autoriser a=a ou erreur d'execution ? (=> pas VC)
- - Check doublon attributs
- - Voir si c'est tolere les liste d'instructions/declarations vide
- - tolerer declaration variable this dans initialisation attribut ? (=> Non pas VC)
+La structure a ete cree pour gerer les declarations mais il y a des choses que je ne comprend pas sur l'assembleur qui
+me bloque
 
-int a=a;
-objet pas constructeur et n'est pas un type.
+# Problemes lies a Ocaml : 
 
+comme env n'est plus unit il faut preciser au compilateur que parfois on s'en fout de la valeur de retour de compile.
 
-(pas le droit declarer deux variables meme nom dans bloc)
+Cela se foit avec let _ = ... in
+soit avec ignore ()
 
- - renommer eval en verification
+c'est chiant et moche a geree ...

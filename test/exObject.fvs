@@ -1,7 +1,17 @@
-object NomObjet is {          
-  var nomAttribut : String := "coucou";   
+/* suis l'exemple de paire-entiers */
+object A is {  
+  var chp1 : Integer := 33;        
+  var chp2 : Integer := 55;  
 }
-/* pour l'instant gere pas plusieurs attributs/objet car ne peut savoir lequel est-ce dans compile */
+object B is {          
+  var chp1 : Integer := 66;        
+  var chp2 : Integer := 44;    
+}
+object C is {          
+  var chp1 : Integer := A.chp1 + B.chp1;        
+  var chp2 : Integer := A.chp2 - B.chp2;    
+}
 {
-  NomObjet.nomAttribut.print();
+ C.chp1.toString().println(); 
+ C.chp2.toString().println();
 }

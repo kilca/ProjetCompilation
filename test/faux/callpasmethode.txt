@@ -3,6 +3,6 @@ def A() is {}
 }
 {
    truc : Integer := A.b();
-      is 
+   is 
    2;
 }

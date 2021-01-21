@@ -1,0 +1,9 @@
+{
+ a : Integer := 2;
+ b : String := "boubou";
+ c : String := "coucou";
+  is
+ a.toString().print(); 
+ c.print();
+ a.toString().print();
+}

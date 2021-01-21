@@ -1,0 +1,10 @@
+
+-- afficher le resultat
+	START
+*	PUSHI 19
+	PUSHL 9
+*   STOREL 9
+*   WRITEI
+	PUSHS "\n"
+	WRITES
+	STOP
