@@ -26,7 +26,7 @@ let table = Eval.table;;
 let cptEtiITE = ref 0;; (* compteur: Instruction globale *)
 let cptEtiMeth = ref 0;; (* compteur : Declaration methode globale *)
 let cptIdCO = ref 0;; (* compteur : id Classe et Object globale *)
-let cptIdDecl = ref 0;; (*compteur : id Declaration locale globale*)
+let cptIdDecl = ref 1;; (*compteur : id Declaration locale globale*)
 
 
 let makeEtiMethod nomMethode = (* generateur d'etiquettes fraiches pour methodes *)
@@ -259,7 +259,7 @@ and compileExpr exp (env : envT) chan  =
             if (Hashtbl.mem env s) then (*cas variable locale *)
             begin
               let (id,typ) = Hashtbl.find env s in
-              output_string chan ("STOREL "^(string_of_int id)^" -- On get la variable de "^s^"\n");(*LOAD*)
+              output_string chan ("PUSHL "^(string_of_int id)^" -- On get la variable de "^s^"\n");(*LOAD*)
               env
             end
             else
@@ -433,11 +433,11 @@ and compileDecl d (env : envT) chan  =
   (*output_string chan "\t\t-- compileDecl\n";*)
   match d.rhs with
   |Some e -> let _ = compileExpr e env chan in
-              output_string chan ("PUSHL "^(string_of_int (!cptIdDecl))^" --On Stock la variable \n" );
+              output_string chan ("STOREL "^(string_of_int (!cptIdDecl))^" --On Stock la variable \n" );
               Hashtbl.add env d.lhs ((!cptIdDecl),d.typ);
               cptIdDecl := (!cptIdDecl) + 1;
               env
-  | None ->   output_string chan ("PUSHL "^(string_of_int (!cptIdDecl))^" --On Stock la variable \n" );
+  | None ->   output_string chan ("STOREL "^(string_of_int (!cptIdDecl))^" --On Stock la variable \n" );
               Hashtbl.add env d.lhs ((!cptIdDecl),d.typ);
               cptIdDecl := (!cptIdDecl) + 1;
               env
@@ -476,7 +476,7 @@ let compile codl main chan =
     compileBloc main env chan
   in
   output_string chan "START\n";
-  cptIdDecl := 0;
+  cptIdDecl := 1;
   let _ = compileMain main (compileLCO codl (Hashtbl.create 50)) chan in
   output_string chan "STOP\n";
   flush chan;

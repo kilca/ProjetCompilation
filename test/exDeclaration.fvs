@@ -1,9 +1,9 @@
 {
- a : Integer := 2;
- b : String := "boubou";
- c : String := "coucou";
+ a : String := "aaaa";
+ b : String := "bbbbb";
+ c : String := "ccccc";
   is
- a.toString().print(); 
- c.print();
- a.toString().print();
+ a.println();
+ b.println();
+ c.println();
 }
