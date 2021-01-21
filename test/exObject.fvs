@@ -9,9 +9,13 @@ object B is {
 }
 object C is {          
   var chp1 : Integer := A.chp1 + B.chp1;        
-  var chp2 : Integer := A.chp2 - B.chp2;    
+  var chp2 : Integer := A.chp2 - B.chp2;
+  def test() is {"test".println();}    
 }
 {
+/*
  C.chp1.toString().println(); 
  C.chp2.toString().println();
+ */
+ C.test();
 }
