@@ -37,7 +37,7 @@ let makeEtiMethod nomMethode = (* generateur d'etiquettes fraiches pour methodes
 let makeEtiITE () = (* generateur d'etiquettes fraiches pour ITE *)
   let sv = string_of_int !cptEtiITE in
   cptEtiITE := !cptEtiITE + 1;
-  ("ELSE : NOP" ^ sv, "ENDIF : NOP" ^ sv)  (* ^ est l'operateur de concatenation de strings *)
+  ("ELSE"^sv, "ENDIF"^sv)  (* ^ est l'operateur de concatenation de strings *)
 ;;
 
 let rec findMethodType (nomCO :string) (nomMethode : string) (args : Ast.expType list)  (env : envT)=
@@ -105,6 +105,25 @@ and expr_to_string exp  (env : envT) =
   | Call (e,s,el)-> findMethodType (expr_to_string e env) s el env(*TODO chose en plus?*) 
   | Inst (s,el)-> "" (*TODO*)
 
+and storeDecl expr env chan=
+match expr with
+Id  i -> 
+    if (Hashtbl.mem env i) then
+    begin
+      let (id,typ) = Hashtbl.find env i in
+      output_string chan ("STOREL "^(string_of_int id)^" -- store variable "^i^"\n");
+    end
+    else
+    begin
+      print_string ("Todo : cas this et ??? : "^i);
+    end
+| ClassID i -> ()(*erreur ?*)
+| Cast (s,e) -> () (*TODO ?*)
+| Selec (e,s) -> ()(*TODO chose en plus?*) 
+| Call (e,s,el)-> () (*TODO *) 
+| Inst (s,el)-> () (*TODO*)
+|_ -> print_string "WTF"
+;;
 (*[!] Todo : prendre en compte l'heritage *)
 (* trouve l'etiquette a partir de la methode *)
 (*retourne (etiquette,Ast.fundecl) *)
@@ -122,28 +141,12 @@ let find_eti_methode nom nomMethode parametres  (env : envT) =
     end
 ;;
 
-(*rempli les classCode et objectCode de !table.class et !table.object *)
-(*
-let fillObject o =
-  Hashtbl.add !table.objet o.nom {
-              data = o;
-              attrIndex = Hashtbl.create 50;
-              methEti = Hashtbl.create 50;
-            }
-and fillClass (c : Ast.classDecl) =
-  Hashtbl.add !table.classe c.nom {
-              data = c;
-              attrIndex = Hashtbl.create 50;
-              methEti = Hashtbl.create 50;
-            }
-;;
-*)
 (* ----------------------  Corp Generation Code ------------------------------ *)
 
 
 let rec compileFunDecl (f : Ast.funDecl) (env : envT) chan =
   output_string chan "\t\t-- compileFunDecl\n";
-  output_string chan (makeEtiMethod f.nom);
+  output_string chan ((makeEtiMethod f.nom)^"\n");
   let nbArgs = List.length f.para in
   let variables = Hashtbl.create 50 in
 
@@ -341,7 +344,7 @@ and compileExpr exp (env : envT) chan  =
                                     begin
                                       let _ = compileExpr e env chan in
                                       output_string chan ("WRITES \n");
-                                      output_string chan ("PUSHS \" \\n \" \n");
+                                      output_string chan ("PUSHS \"\\n\"\n");
                                       output_string chan ("WRITES \n"); 
                                       env 
                                     end
@@ -388,12 +391,10 @@ and compileReturn (env : envT) chan  =
 and compileIte exp th el (env : envT) chan  =
   let (etiElse, etiFin) = makeEtiITE () in
   let _ = compileExpr exp env chan in
-  output_string chan "JZ ";
-  output_string chan etiElse;
+  output_string chan "JZ "; output_string chan etiElse;
   output_string chan "\n";
   let _ = compileInstr th env chan in
-  output_string chan "JUMP ";
-  output_string chan etiFin;
+  output_string chan "JUMP "; output_string chan etiFin;
   output_string chan "\n";
   output_string chan etiElse;
   output_string chan ": NOP\n";
@@ -405,7 +406,9 @@ and compileIte exp th el (env : envT) chan  =
 
 (* exp1, exp2 *)
 and compileAssign exp1 exp2 (env : envT) chan  =
-  output_string chan "\t\t-- compileAssign\n";
+  (*si c'est une variable globale alors STOREG, sinon STOREL *)
+  let _ = compileExpr exp2 env chan in
+  let _ = storeDecl exp1 env chan in
   env
 
 

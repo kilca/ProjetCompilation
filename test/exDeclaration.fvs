@@ -3,7 +3,8 @@
  b : String := "bbbbb";
  c : String := "ccccc";
   is
- a.println();
- b.println();
- c.println();
+ if (2 = 2) 
+ then "dans then".println();
+ else "dans else".println();
+
 }
