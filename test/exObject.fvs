@@ -18,7 +18,7 @@ object C is {
   def h(x: Integer, y : Integer) : Integer is {
     x.toString().println();
     y.toString().println();
-    x+y;
+    return x+y;
   }
 }
 {

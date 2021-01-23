@@ -3,6 +3,6 @@ object C is {
 }
 {
  C.a := "bbbb";
- a.println();
+ C.a.println();
 
 }

@@ -1,5 +1,5 @@
 open Ast
-
+open Eval
 (* --------------- Types et fonctions utiles ------------------------- *)
 
 type methParam = string*string list;;
@@ -411,8 +411,8 @@ and compileExpr exp (env : envT) chan  =
 
 and compileReturn (env : envT) chan  =
   output_string chan "\t\t-- compileReturn\n";
-  if (not (Hashtbl.mem env "result")) then failwith "return without result"
-  else begin
+  if (Hashtbl.mem env "result") then
+  begin
     let (id,typ) = Hashtbl.find env "result" in
     output_string chan ("STOREL "^(string_of_int id)^" -- resultat fonction\n");  
     output_string chan ("RETURN --on repart\n")
