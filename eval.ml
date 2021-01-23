@@ -4,7 +4,6 @@ open Primitives
 ---Verificateur Contextuel---
 *)
 
-(*Pour declarer variable "globale" et eviter de le redonner a chaque parametre*)
 
 (*
 string1 : nom de la fonction
@@ -15,6 +14,7 @@ string2 list: nom des types de la fonction
 
 type methParam = string*string list;;
 
+
 type classHash = {
   data : Ast.classDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
@@ -22,12 +22,14 @@ type classHash = {
   cons : Ast.consDecl
 };;
 
+
 type objetHash = {
   data : Ast.objetDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
   meth : ((methParam, Ast.funDecl) Hashtbl.t);
 };;
 
+(*Pour declarer variable "globale" et eviter de le redonner a chaque parametre*)
 type tableCO = 
   { 
     mutable classe : ((string, classHash) Hashtbl.t);
@@ -81,14 +83,14 @@ let ajouterMeth (a : funDecl) r =
     begin
       if (a.over) 
       then Hashtbl.add r (to_methParam a) a
-      else failwith "function already defined (missing override ?)"
+      else failwith ("function already defined (missing override ?) : "^a.nom)
     end
   else
     begin
       if (not a.over) then
         Hashtbl.add r (to_methParam a) a
       else
-        failwith "function must be present in parent"
+        failwith ("function with override must be present in parent : "^a.nom)
     end
   ;;
 
@@ -391,6 +393,7 @@ let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
 ;;
 
 (*ajouter la liste de declaration dans la hashtable variables (utilise dans checkBloc)*)
+(*TODO CHECK INIT *)
 let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.decl) Hashtbl.t)) =
   List.iter (fun x -> 
   if (x.lhs = "this") then failwith "error, can't create a variable with name this"
@@ -618,6 +621,8 @@ let check_Main (b: Ast.blocType) =
   checkBloc b ("",("",[])) truc Main
 ;;
 
+(*on check si doublon de nom de classe/objet *)
+(*ld list de classe/objet *)
 let check_ClasseObjet_duplicat ld =
   let rec check tabl ld=
     match ld with
@@ -632,15 +637,64 @@ let check_ClasseObjet_duplicat ld =
   in check (Hashtbl.create 50) ld
 ;;
 
+(*on check les doublons d'attributs *)
+(*en tete : list de declaration de l'en tete (vide pour Object) *)
+(*corp : liste de declaration dans le bloc *)
+let check_Attribut_duplicat (nom : string) (enTete : Ast.decl list) (corp : Ast.decl list)=
+  List.iter (fun x -> if (not x.isVar) then failwith ("error an attribut in bloc of class/object must have var :"^x.lhs^" , "^nom)) corp;
+  let rec check tabl ld=
+    match ld with
+    | [] -> ()
+    | x::s ->
+    begin
+      if (Hashtbl.mem tabl x.lhs) then failwith ("erreur doublon d'attribut : "^x.lhs^", dans "^nom)
+      else Hashtbl.add tabl x.lhs "useless"; check tabl s
+    end
+  in check (Hashtbl.create 50) (enTete@corp)
+;;
+
+let call_checkAttrDuplicat (a :classObjDecl)=
+
+  match a with
+  |Class c -> 
+  begin
+    let enTete = c.para in
+    let corp = ref [] in
+    (*on ajoute tous les attributs declares dans le bloc dans corp *)
+    List.iter (fun cbl ->
+    match cbl with
+    | Att a -> corp := a::!corp; 
+    |_ -> ()
+    ) c.cbl;
+    check_Attribut_duplicat c.nom enTete !corp
+  end
+  |Objet c ->
+  begin
+    let enTete = [] in
+    let corp = ref [] in
+    (*on ajoute tous les attributs declares dans le bloc dans corp *)
+    List.iter (fun cbl ->
+    match cbl with
+    | Att a -> corp := a::!corp; 
+    |_ -> ()
+    ) c.cbl;
+    check_Attribut_duplicat c.nom enTete !corp
+  end 
+
+;; 
+
 (*verifie l'entierete de l'ast (appele par main) *)
 let eval ld e =
 
   (*on ajoute les classes Integer et String*)
   let nouvld = (ajouterClassesDefauts ld) in
 
-  check_ClasseObjet_duplicat nouvld;
+  (*on check si duplicat de nom de classe/objet *)
+  check_ClasseObjet_duplicat nouvld;(*verifiee aussi lors de l'ajout *)
+  (*on check si duplicat de nom d'attributs dans classe/objet *)
+  List.iter (fun x -> call_checkAttrDuplicat x) nouvld;
 
-  let tmp = Hashtbl.create 50 in
+  let tmp = Hashtbl.create 50 in (*hash temporaire *)
   List.iter (fun d ->   match d with
   Class x -> Hashtbl.add tmp x.nom x
   |Objet x -> ()) nouvld;
