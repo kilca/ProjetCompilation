@@ -154,29 +154,43 @@ let rec compileFunDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
   Hashtbl.add hashO.methEti mparam eti;
 
   let nbArgs = List.length f.para in
+  let idRetour =  ((-nbArgs)-1) in
   let variables = Hashtbl.create 50 in
+
+  (*si la fonction retourne qqc on declare result*)
+  match f.typ with
+  |None->();
+  |Some x-> Hashtbl.add variables "result" (idRetour,x);
+  ;
 
   (*equivalent d'un for *)
   let rec aux (para : Ast.decl list) i =
     match para with
     | [] -> ()
-    | x::s -> begin
-               output_string chan ("PUSHL "^(string_of_int i)^" --recup arg");
-              output_string chan ("STOREL "^(string_of_int i)^" --recup valeurArg");(*load 0 dans exemple ??*)
-              Hashtbl.add variables x.lhs i;
+    | x::s -> begin(*on push les arguments de la fonction *)
+               (*output_string chan ("PUSHL "^(string_of_int i)^" --recup arg\n");*)
+              (*output_string chan ("STOREL "^(string_of_int i)^" --stocker valeurArg\n");*)(*load 0 dans exemple ??*)
+              
+              (*les arguments sont deja compris en tant que definission du bloc *)
+              Hashtbl.add variables x.lhs (i,x.typ);
               aux s (i+1);
               end
   in aux (f.para) (-nbArgs);
 
   cptIdDecl:= 0;
-  let _ = compileBloc (f.corp) (Hashtbl.create 50) chan in
+  let _ = compileBloc (f.corp) variables chan in
+  let _ = compileReturn variables chan in
   match f.typ with
   | None -> (); (*Todo : ??? *)
   | Some x ->
+            (*output_string chan ("STOREL "^(string_of_int ((-nbArgs)-1))^" -- resultat\n"); *)  
+            (*
             output_string chan ("PUSHL "^(string_of_int (-nbArgs))^" -- resultat\n");
             output_string chan ("SWAP -- swap adresse et val\n");
             output_string chan ("STORE 0 -- stocker resultat\n");
-  ;output_string chan ("RETURN --on repart\n");
+            *)
+            ();
+;
   env;
 
 
@@ -268,6 +282,10 @@ and compileExpr exp (env : envT) chan  =
             begin
               let (id,typ) = Hashtbl.find env s in
               output_string chan ("PUSHL "^(string_of_int id)^" -- On get la variable de "^s^"\n");(*LOAD*)
+              (*
+              output_string chan ("DUPN 1 -- On duplique la variable de "^s^"\n");(*LOAD*)
+              output_string chan ("STOREL "^(string_of_int id)^" -- On restock la variable de "^s^"\n");(*LOAD*)
+              *)
               env
             end
             else
@@ -305,7 +323,7 @@ and compileExpr exp (env : envT) chan  =
                     env
   | Concat (e1, e2) -> let _ = compileExpr e1 env chan in
                        let _ = compileExpr e2 env chan in
-                       output_string chan "CONCAT\n";
+                       output_string chan "CONCAT\n";(*Todo : Autre chose*)
                        env
   | UMinus e -> output_string chan "PUSHI 0\n";
                 let _ = compileExpr e env chan in
@@ -351,6 +369,11 @@ and compileExpr exp (env : envT) chan  =
                                       output_string chan ("WRITES \n");
                                       output_string chan ("PUSHS \"\\n\"\n");
                                       output_string chan ("WRITES \n"); 
+                                      (*
+                                      output_string chan ("PUSHS \"\\n\"\n");
+                                      output_string chan ("CONCAT \n");
+                                      output_string chan ("WRITES \n"); 
+                                      *)
                                       env 
                                     end
                                     else env
@@ -389,6 +412,13 @@ and compileExpr exp (env : envT) chan  =
 
 and compileReturn (env : envT) chan  =
   output_string chan "\t\t-- compileReturn\n";
+  if (not (Hashtbl.mem env "result")) then failwith "return without result"
+  else begin
+    let (id,typ) = Hashtbl.find env "result" in
+    output_string chan ("STOREL "^(string_of_int id)^" -- resultat fonction\n");  
+    output_string chan ("RETURN --on repart\n")
+  end 
+  ;
   env
 
 
@@ -445,7 +475,15 @@ and compileDecl d (env : envT) chan  =
               Hashtbl.add env d.lhs ((!cptIdDecl),d.typ);
               cptIdDecl := (!cptIdDecl) + 1;
               env
-  | None ->   output_string chan ("STOREL "^(string_of_int (!cptIdDecl))^" --On Stock la variable \n" );
+  | None ->   
+              match d.typ with
+              | "Integer" -> 
+              output_string chan ("PUSHI 0 --On Init la variable \n" );
+              | "String" ->
+              output_string chan ("PUSHS \"\" --On Init la variable \n" );
+              | _ -> ();
+              ;
+              output_string chan ("STOREL "^(string_of_int (!cptIdDecl))^" --On Stock la variable \n" );
               Hashtbl.add env d.lhs ((!cptIdDecl),d.typ);
               cptIdDecl := (!cptIdDecl) + 1;
               env

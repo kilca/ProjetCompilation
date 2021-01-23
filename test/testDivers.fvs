@@ -1,0 +1,13 @@
+object C is {   
+       
+  def h(x: Integer, y : Integer) : Integer is {
+    return x+y;
+  }
+}
+{
+ a : Integer := 9;
+ is
+ a := C.h(1,2);
+ a.toString().println();
+
+}

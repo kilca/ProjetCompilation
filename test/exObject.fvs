@@ -10,12 +10,22 @@ object B is {
 object C is {          
   var chp1 : Integer := A.chp1 + B.chp1;        
   var chp2 : Integer := A.chp2 - B.chp2;
-  def test() is {"test".println();}    
+  def test(a : String) is 
+  {
+    a := "loool";
+    a.println();
+  }  
+  def h(x: Integer, y : Integer) : Integer is {
+    x.toString().println();
+    y.toString().println();
+    x+y;
+  }
 }
 {
-/*
- C.chp1.toString().println(); 
- C.chp2.toString().println();
- */
- C.test();
+ a : Integer := 9;
+ is
+ C.test("coucou");
+ a := C.h(1,2);
+ a.toString().println();
+
 }
