@@ -11,8 +11,8 @@ let parse_with_error lexbuf file_in chan =
   try
     let codl, main = TpParse.prog TpLex.token lexbuf in (* classObjectDeclarationList, main programm function *)
     
-    Print.print_progType (codl, main);
     Eval.eval codl main;
+    Print.print_progType (codl, main);
     Compil.compile codl main chan;
     
   with
