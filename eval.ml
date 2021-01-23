@@ -10,6 +10,9 @@ open Primitives
 string1 : nom de la fonction
 string2 list: nom des types de la fonction
 *)
+
+(*let (result : expType) = Cste(Int(0));;*)
+
 type methParam = string*string list;;
 
 type classHash = {
@@ -424,9 +427,23 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
       (* Etapes pour prendre en compte la portee : *)
       (* -  On check d'abord si declaration dans variables locales, sinon dans variables et sinon erreur *)
       (*Techniquement il modifiera seulement si dans variables (mais on modifie pas en vc) *)
-  let checkInstructions ins =
+  let rec checkInstructions ins =
     match ins with
-      Expr e -> ()
+      Expr e -> 
+          (*faire exptypestring*)
+        begin
+          match quelbloc with
+            | Classe -> expr_to_typestring e variables "Classe";
+            | Objet -> expr_to_typestring e variables "Object";
+            | Main -> expr_to_typestring e variables "Main";
+                
+        end;
+        ();
+        (*
+        if Hashtbl.mem variablesLocales e then true
+          else if Hashtbl.mem variables e then true 
+            else failwith "not a good instruction"
+        *)
     | Bloc b -> 
       begin
         (*on ajoute les variables locales a une copie des variables du bloc du dessus *)
@@ -434,11 +451,100 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
         Hashtbl.iter (fun a b -> Hashtbl.add sousVariables a b) variablesLocales;
         checkBloc b infomethod variablesLocales quelbloc
       end
-    | Return oe -> ()
-    | Ite (e,it,ie) -> ()
+    | Return oe -> 
+        begin
+        match quelbloc with 
+        | Classe -> ()
+        (*(Hashtbl.find (!table.classe) (snd infomethod)).typ*)
+                (*
+                let inf = Hashtbl.find (!table.classe) (fst infomethod) in
+                    let ht = Hashtbl.find (inf.meth) (snd infomethod) in
+              if ht =  expr_to_typestring oe variables "Classe" then ()
+                      else failwith "trying to return a different type than the type method"
+                    *)
+            (*pour None -> renvoie dernière instanciation*)
+
+            (*
+            match oe with 
+            | None -> ()
+            
+              if (Hashtbl.find (!table.classe) (snd infomethod)).typ = None then ()
+                        else failwith "trying to return a different type than the type method"
+            *)
+            (*if (Hashtbl.find (!table.classe) (snd infomethod)).typ =  expr_to_typestring e variables "Classe" then ()
+                      else failwith "trying to return a different type than the type method"
+            *)
+        | Objet -> ()
+          (*
+            let inf = Hashtbl.find (!table.objet) (fst infomethod) in
+                    let ht = Hashtbl.find (inf.meth) (snd infomethod) in
+              if ht =  expr_to_typestring oe variables "Classe" then ()
+                      else failwith "trying to return a different type than the type method"
+          *)
+        | Main -> ()
+        
+      end
+    
+        (*match quelbloc with *)
+
+        (*check que oe est de même type que type de retour de la méthode*)
+        (*
+        | Classe -> 
+              if expr_to_typestring oe variables "Classe" = expr_to_typestring er variables "Classe" then ()
+                else failwith "trying to return another type than the method type name" 
+          | Objet -> 
+              
+              if expr_to_typestring el variables "Objet" = expr_to_typestring er variables "Objet" then ()
+                else failwith "trying to return another type than the method type name"
+              
+          | Main -> 
+              
+              if expr_to_typestring el variables "Main" = expr_to_typestring er variables "Main" then ()
+                else failwith "trying to return another type than the method type name"
+          *)
+
+    | Ite (e,it,ie) -> checkInstructions it;checkInstructions ie;
+
+      begin
+        match quelbloc with
+          | Classe -> 
+              if expr_to_typestring e variables "Classe" = "Integer" then ()
+              else failwith "type integer is required" 
+            
+          | Objet -> 
+              if expr_to_typestring e variables "Object" = "Integer" then ()
+              else failwith "type integer is required" 
+              
+          | Main -> 
+               if expr_to_typestring e variables "Main" = "Integer" then ()
+              else failwith "type integer is required" 
+              
+      end
+        
+        
+        (*| _ -> "you have to put an integer on the condition"*)
     | Assign (el,er) -> 
       begin
-      (*verifier que el n'est pas une cste *)
+        (*verifier que el n'est pas une cste *)
+        match el with
+        |Cste(el) -> failwith "trying to assign a const"
+        |CsteStr(el) -> failwith "trying to assign a const"
+        |_ -> 
+          match quelbloc with
+          | Classe -> 
+              if expr_to_typestring el variables "Classe" = expr_to_typestring er variables "Classe" then ()
+                else failwith "trying to assigne 2 different types"  
+          | Objet -> 
+              
+              if expr_to_typestring el variables "Objet" = expr_to_typestring er variables "Objet" then ()
+                else failwith "trying to assigne 2 different types"
+              
+          | Main -> 
+              
+              if expr_to_typestring el variables "Main" = expr_to_typestring er variables "Main" then ()
+                else failwith "trying to assigne 2 different types"
+              
+      
       (*verifier que expr_to_typestring de gauche est meme que celui de droite *)
       end
   in List.iter (fun x -> checkInstructions x) instructions
