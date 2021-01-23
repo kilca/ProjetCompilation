@@ -28,6 +28,7 @@ let cptEtiMeth = ref 0;; (* compteur : Declaration methode globale *)
 let cptIdCO = ref 0;; (* compteur : id Classe et Object globale *)
 let cptIdDecl = ref 1;; (*compteur : id Declaration locale globale*)
 
+let currCO = ref "";;
 
 let makeEtiMethod nomMethode = (* generateur d'etiquettes fraiches pour methodes *)
   cptEtiMeth := !cptEtiMeth + 1;
@@ -79,15 +80,19 @@ and findAttributType (nomCO :string) (nomAttribut : string)  (env : envT)=
 and expr_to_string exp  (env : envT) (currentClass : string)=
   match exp with
     Id  i -> 
-        if (Hashtbl.mem env i) then
-        begin
-          let (id,typ) = Hashtbl.find env i in
-          typ
-        end
+        if (i = "this") then (!currCO)
         else
-        begin
-          findAttributType currentClass i env
-        end
+          begin
+            if (Hashtbl.mem env i) then
+            begin
+              let (id,typ) = Hashtbl.find env i in
+              typ
+            end
+            else
+            begin
+              findAttributType currentClass i env
+            end
+          end
   | ClassID i -> i (*TODO*)
   | Cste _ -> "Integer"
   | CsteStr _-> "String"
@@ -170,9 +175,11 @@ let rec compileFunDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
   Hashtbl.add hashO.methEti mparam eti;
 
   let nbArgs = List.length f.para in
-  let idRetour =  ((-nbArgs)-1) in
+  let idRetour =  ((-nbArgs)-2) in
   let variables = Hashtbl.create 50 in
 
+  Hashtbl.add variables "this" (-1,objectName);
+  
   (*si la fonction retourne qqc on declare result*)
   match f.typ with
   |None->();
@@ -191,7 +198,7 @@ let rec compileFunDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
               Hashtbl.add variables x.lhs (i,x.typ);
               aux s (i+1);
               end
-  in aux (f.para) (-nbArgs);
+  in aux (f.para) (-nbArgs-1);
 
   cptIdDecl:= 0;
   let _ = compileBloc (f.corp) variables chan in
@@ -372,16 +379,14 @@ and compileExpr exp (env : envT) chan  =
                       begin
                       match expType with
                       | "String" ->
-                                  
+                                    let _ = compileExpr e env chan in (*On prepare le this *)
                                     if (s = "print") then 
                                     begin
-                                      let _ = compileExpr e env chan in
                                       output_string chan ("WRITES \n");
                                       env
                                     end
                                     else if (s = "println") then
                                     begin
-                                      let _ = compileExpr e env chan in
                                       output_string chan ("WRITES \n");
                                       output_string chan ("PUSHS \"\\n\"\n");
                                       output_string chan ("WRITES \n"); 
@@ -394,9 +399,9 @@ and compileExpr exp (env : envT) chan  =
                                     end
                                     else env
                       | "Integer" ->
+                                    let _ = compileExpr e env chan in (*On prepare le this *)
                                     if (s = "toString") then
                                     begin
-                                    let _ = compileExpr e env chan in
                                     output_string chan ("STR \n");
                                     env
                                     end
@@ -412,9 +417,10 @@ and compileExpr exp (env : envT) chan  =
                                 else output_string chan ("--la fonction retourne rien\n")
                                 ;
                                 List.iter (fun ex -> let _ = compileExpr ex env chan in ()) el;
+                                let _ = compileExpr e env chan in (*On prepare le this *)
                                 output_string chan ( "PUSHA "^eti^"--addr fonction \n"); 
                                 output_string chan ("CALL --appel fonction \n");
-                                output_string chan ("POPN " ^ string_of_int nbArgs ^ "--Depiler les arguments\n");
+                                output_string chan ("POPN " ^ string_of_int (nbArgs+1) ^ "--Depiler les arguments\n");
                                 (*TODO : LOAD ?*)
                                 env
                                 end
@@ -434,6 +440,8 @@ and compileReturn (env : envT) chan  =
     output_string chan ("STOREL "^(string_of_int id)^" -- resultat fonction\n");  
     output_string chan ("RETURN --on repart\n")
   end 
+  else
+    output_string chan ("RETURN --on repart\n")
   ;
   env
 
@@ -528,13 +536,16 @@ let compile codl main chan =
   let rec compileLCO codl (env : envT) =
     let compileClassOrObj co (env : envT) chan =
       match co with
-        Class c -> compileClass c env chan
-      | Objet o -> compileObject o env chan
+        Class c -> (currCO := c.nom);
+                    compileClass c env chan
+      | Objet o -> (currCO := o.nom);
+                    compileObject o env chan
     in
     match codl with
       [] -> env
     | he::ta -> compileLCO ta (compileClassOrObj he env chan)
   and compileMain main (env : envT) chan =
+    currCO := "";
     output_string chan "Main: NOP      --Debut Main\n";
     compileBloc main env chan
   in
