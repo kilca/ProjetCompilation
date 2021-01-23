@@ -107,18 +107,35 @@ and expr_to_string exp  (env : envT) (currentClass : string)=
 and storeDecl expr env chan=
 match expr with
 Id  i -> 
-    if (Hashtbl.mem env i) then
-    begin
-      let (id,typ) = Hashtbl.find env i in
-      output_string chan ("STOREL "^(string_of_int id)^" -- store variable "^i^"\n");
-    end
-    else
-    begin
-      print_string ("Todo : cas this et ??? : "^i);
-    end
-| ClassID i -> ()(*erreur ?*)
+          if (Hashtbl.mem env i) then
+          begin
+            let (id,typ) = Hashtbl.find env i in
+            output_string chan ("STOREL "^(string_of_int id)^" -- store variable "^i^"\n");
+          end
+          else
+          begin
+            (*Todo : revoir *)
+            if (i = "this") then
+            begin
+              print_string "Todo : trouver id ";
+            end
+            else
+            begin
+              print_string "Todo : ???";
+            end
+          end
+| ClassID i -> (*on push l'adresse de l'objet*)
+          let hashO = (Hashtbl.find !table.objet i) in
+          let ind = !(hashO.index) in
+          output_string chan ("PUSHG "^(string_of_int (ind))^" -- push objet"^i^"\n");
 | Cast (s,e) -> () (*TODO ?*)
-| Selec (e,s) -> ()
+| Selec (e,s) ->  (*Todo : pour l'instant marche que avec objet *)
+          let _ = storeDecl e env chan in
+          output_string chan ("SWAP \n");
+          let nomObjet = expr_to_string e env "" in
+          let hashO = (Hashtbl.find !table.objet nomObjet) in
+          let ind = Hashtbl.find hashO.attrIndex s in
+          output_string chan ("STORE "^(string_of_int (ind))^" -- stocke variable"^s^"\n")
 | Call (e,s,el)-> () (*TODO *) 
 |_ -> failwith "WTF LEFT ASSIGN";
 ;;
