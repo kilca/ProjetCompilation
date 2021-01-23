@@ -41,7 +41,7 @@ let makeEtiITE () = (* generateur d'etiquettes fraiches pour ITE *)
 ;;
 
 let rec findMethodType (nomCO :string) (nomMethode : string) (args : Ast.expType list)  (env : envT)=
-  let argsString = List.map (fun x -> expr_to_string x env) args in
+  let argsString = List.map (fun x -> expr_to_string x env nomCO) args in
   if (Hashtbl.mem !table.objet nomCO) then (*si c'est un objet*)
     begin
       let objetH = Hashtbl.find !table.objet nomCO in
@@ -76,7 +76,7 @@ and findAttributType (nomCO :string) (nomAttribut : string)  (env : envT)=
 (* TODO : donner le type de l'expression 
   devra probablement prendre plus tard un autre arg env
 *)
-and expr_to_string exp  (env : envT) =
+and expr_to_string exp  (env : envT) (currentClass : string)=
   match exp with
     Id  i -> 
         if (Hashtbl.mem env i) then
@@ -86,8 +86,7 @@ and expr_to_string exp  (env : envT) =
         end
         else
         begin
-          print_string ("Todo : cas this et ??? : "^i);
-          i
+          findAttributType currentClass i env
         end
   | ClassID i -> i (*TODO*)
   | Cste _ -> "Integer"
@@ -101,8 +100,8 @@ and expr_to_string exp  (env : envT) =
   | UPlus _-> "Integer"
   | Comp _-> "Integer"
   | Cast (s,e) -> s (*TODO ?*)
-  | Selec (e,s) -> findAttributType (expr_to_string e env) s env(*TODO chose en plus?*) 
-  | Call (e,s,el)-> findMethodType (expr_to_string e env) s el env(*TODO chose en plus?*) 
+  | Selec (e,s) -> findAttributType (expr_to_string e env s) s env(*TODO chose en plus?*) 
+  | Call (e,s,el)-> findMethodType (expr_to_string e env s) s el env(*TODO chose en plus?*) 
   | Inst (s,el)-> "" (*TODO*)
 
 and storeDecl expr env chan=
@@ -127,7 +126,7 @@ Id  i ->
 (* trouve l'etiquette a partir de la methode *)
 (*retourne (etiquette,Ast.fundecl) *)
 let find_eti_methode nom nomMethode parametres  (env : envT) =
-  let paramTypes = List.map (fun x -> expr_to_string x env) parametres in
+  let paramTypes = List.map (fun x -> expr_to_string x env nom) parametres in
   if (Hashtbl.mem !table.classe nom) then (*dans classe *)
     begin
       let (cCode : Eval.classHash) = Hashtbl.find !table.classe nom in
@@ -344,7 +343,7 @@ and compileExpr exp (env : envT) chan  =
   | Cast (s, el) -> output_string chan "\t\t\t-- cast\n";
                     env
   | Selec (e, s) -> (*Todo : seul le cas object est geree *)
-                    let typeExpr = expr_to_string e env in
+                    let typeExpr = expr_to_string e env s in
                     let objetHash = Hashtbl.find !table.objet typeExpr in
                     let idAttr = Hashtbl.find objetHash.attrIndex s in
                     let _ = compileExpr e env chan in(*Todo? utiliser retour ?*)
@@ -352,7 +351,7 @@ and compileExpr exp (env : envT) chan  =
                     
                     env
   | Call (e, s, el) ->
-                      let expType = expr_to_string e env in
+                      let expType = expr_to_string e env s in
                       begin
                       match expType with
                       | "String" ->
@@ -387,7 +386,7 @@ and compileExpr exp (env : envT) chan  =
                                     else env
                       | _->  (*Todo *)
                                 begin
-                                let nomCO = expr_to_string e env in
+                                let nomCO = expr_to_string e env s in
                                 let nbArgs = List.length el in
                                 let (eti,meth) = find_eti_methode nomCO s el env in
                                 if (meth.typ <> None) 

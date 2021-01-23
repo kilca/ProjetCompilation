@@ -1,13 +1,8 @@
 object C is {   
-       
-  def h(x: Integer, y : Integer) : Integer is {
-    return x+y;
-  }
+  var a : String := "aaaa";     
 }
 {
- a : Integer := 9;
- is
- a := C.h(1,2);
- a.toString().println();
+ C.a := "bbbb";
+ a.println();
 
 }
