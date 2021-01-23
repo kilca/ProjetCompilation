@@ -107,7 +107,7 @@ and expr_to_string exp  (env : envT) (currentClass : string)=
   | Cast (s,e) -> s (*TODO ?*)
   | Selec (e,s) -> findAttributType (expr_to_string e env s) s env(*TODO chose en plus?*) 
   | Call (e,s,el)-> findMethodType (expr_to_string e env s) s el env(*TODO chose en plus?*) 
-  | Inst (s,el)-> "" (*TODO*)
+  | Inst (s,el)-> s
 
 and storeDecl expr env chan=
 match expr with
@@ -270,7 +270,7 @@ and compileLObjectMember objectName lcm (env : envT) chan =
   | he::ta -> 
   output_string chan "DUPN 1\n";(*on dupplique l'adresse de l'objet pour la store *)
   compileLObjectMember objectName ta (compileObjectMember objectName he env chan) chan
-
+  
 (* obj : object, env : environment (structure abstraite), chan : string buffer *)
 and compileObject obj (env : envT) chan =
   
@@ -305,10 +305,6 @@ and compileExpr exp (env : envT) chan  =
             begin
               let (id,typ) = Hashtbl.find env s in
               output_string chan ("PUSHL "^(string_of_int id)^" -- On get la variable de "^s^"\n");(*LOAD*)
-              (*
-              output_string chan ("DUPN 1 -- On duplique la variable de "^s^"\n");(*LOAD*)
-              output_string chan ("STOREL "^(string_of_int id)^" -- On restock la variable de "^s^"\n");(*LOAD*)
-              *)
               env
             end
             else
@@ -390,11 +386,6 @@ and compileExpr exp (env : envT) chan  =
                                       output_string chan ("WRITES \n");
                                       output_string chan ("PUSHS \"\\n\"\n");
                                       output_string chan ("WRITES \n"); 
-                                      (*
-                                      output_string chan ("PUSHS \"\\n\"\n");
-                                      output_string chan ("CONCAT \n");
-                                      output_string chan ("WRITES \n"); 
-                                      *)
                                       env 
                                     end
                                     else env
@@ -425,9 +416,14 @@ and compileExpr exp (env : envT) chan  =
                                 env
                                 end
                     end
-  | Inst (s, el) -> output_string chan "\t\t\t-- inst\n";
-                    env
-
+  | Inst (s, el) -> 	output_string chan ("-- instantier un objet de classe"^s);env
+                      (*Todo *)
+                      (*
+                      ALLOC 1 -- a
+                      DUPN 1
+                      PUSHG 0
+                      STORE 0
+                      *)
 
 (* SUB INSTR *)
 

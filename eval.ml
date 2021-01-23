@@ -425,6 +425,7 @@ let checkAssignDeclaration (dec : Ast.decl) variables nomCO =
   if (nomTypeDroite <> dec.typ) then failwith ("erreur mauvais type d'init de variable : "^dec.lhs^" dans : "^nomCO)
 ;;
 
+
 (*fonction qui check le bloc de soit une methode de soit le main *)
 (*info method  : nomClasse*methParam*)
 (*quelbloc : soit Main, soit Classe, soit Objet *)
@@ -463,6 +464,7 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
       end
   in List.iter (fun x -> checkInstructions x) instructions
 ;;
+
 
 (*On teste toutes les methodes d'une classe *)
 (*c : classeHash ou objetHash *)
