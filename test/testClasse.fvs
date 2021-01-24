@@ -5,7 +5,9 @@ class A (var v : Integer) is {
   }
 }
 {
-  a: A := new A();
+  a: A := new A(2);
   is
+  a.v := 2;
+  a.v.toString().println();
   "nothing".println();
 }

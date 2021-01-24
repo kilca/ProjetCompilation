@@ -218,7 +218,53 @@ let rec compileFunDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
 
 
 and compileConsDecl c (env : envT) chan =
-  output_string chan "\t\t-- compileConsDecl\n";
+  (*Todo *)
+  (*Todo : Creer etiquette *)
+  (*Todo call constructeur parent *)
+  (*Todo declarer les index des attributs de la classe exemple :*)
+  
+  (*
+  let hashC = Hashtbl.find !table.classe c.nom in
+
+  match c.ext with
+  | Some x -> let hashCParent = Hashtbl.find !table.classe x in
+              hashC.attrIndex = Hashtbl.copy hashCParent.attrIndex;
+              hashC.attrCpt := !hashCParent.attrCpt;
+  | None -> ();
+  ;
+  
+  Hashtbl.iter (fun nom decl -> 
+    if (not (Hashtbl.mem hashC nom)) then
+    begin
+      Hashtbl.add (hashC.attr) nom !hashC.attrCpt; 
+      hashC.attrCpt := !hashC.attrCpt + 1;
+    end
+  
+  ) hashC.attr
+    *)
+    
+    (*Todo : assigner les parametres du constructeur aux attributs : (les outputs seront les suivants)*)
+    
+    (*
+  let currId = ref 0 in
+    Hashtbl.iter (fun nom decl -> 
+    let _ =
+      match decl.rhs with
+      |Some e -> let _ = 
+                output_string chan ("DUPN 1\n");
+                compileExpr e env chan in
+                let currIdStr = string_of_int (!currId) in
+                output_string chan ("STORE "^currIdStr^"\n");
+                env
+      | None -> env
+      in
+      currId := (!currId + 1);
+
+  ) hashC.attr;
+  env
+  *)
+
+  (*Todo : compiler corp fonction *)
   env
 
 
@@ -416,28 +462,15 @@ and compileExpr exp (env : envT) chan  =
                                 env
                                 end
                     end
-  | Inst (s, el) -> 	output_string chan ("-- instantier un objet de classe"^s^"\n");
-                      (*Todo *)
+  | Inst (s, el) -> 	 
                       let hashC = Hashtbl.find !table.classe s in
                       let nb = Hashtbl.length hashC.attr in
-                      let currId = ref 0 in
                       output_string chan ("ALLOC "^(string_of_int nb)^"\n");
-                      Hashtbl.iter (fun nom decl -> 
-                        
-                        let _ =
-                          match decl.rhs with
-                          |Some e -> let _ = 
-                                    output_string chan ("DUPN 1\n");
-                                    compileExpr e env chan in
-                                    let currIdStr = string_of_int (!currId) in
-                                    output_string chan ("STORE "^currIdStr^"\n");
-                                    env
-                          | None -> env
-                          in
-                          currId := (!currId + 1);
-              
-                      ) hashC.attr;
+                      output_string chan ("-- instantier un objet de classe"^s^"\n");
                       env
+                      (*Todo : serait un call du constructeur (et rien d'autre ??*)
+                      
+  (*TODO *)
 
 (* SUB INSTR *)
 
