@@ -46,6 +46,7 @@ and makeEtiITE () = (* generateur d'etiquettes fraiches pour ITE *)
   ("ELSE"^sv, "ENDIF"^sv)  (* ^ est l'operateur de concatenation de strings *)
 ;;
 
+
 let rec findMethodType (nomCO :string) (nomMethode : string) (args : Ast.expType list)  (env : envT)=
   let argsString = List.map (fun x -> expr_to_string x env nomCO) args in
   if (Hashtbl.mem !table.objet nomCO) then (*si c'est un objet*)
@@ -142,9 +143,21 @@ and storeDecl expr env chan=
   | Selec (e,s) ->  (*Todo : pour l'instant marche que avec objet *)
           let _ = storeDecl e env chan in
           output_string chan ("\tSWAP \n");
+          print_string "aaaa";
           let nomObjet = expr_to_string e env "" in
-          let hashO = (Hashtbl.find !table.objet nomObjet) in
-          let ind = Hashtbl.find hashO.attrIndex s in
+          let ind =
+          if (Hashtbl.mem !table.objet nomObjet) then (*si c'est un objet *)
+          begin
+            let hashO = (Hashtbl.find !table.objet nomObjet) in
+            Hashtbl.find hashO.attrIndex s
+          end
+          else
+          begin
+            let hashO = (Hashtbl.find !table.classe nomObjet) in
+            Hashtbl.find hashO.attrIndex s
+          end
+          in
+          print_string "bbbb";
           output_string chan ("\tSTORE "^(string_of_int (ind))^" -- stocke variable "^s^"\n")
   | Call (e,s,el)-> () (*TODO *)
   |_ -> failwith "WTF LEFT ASSIGN";
@@ -169,13 +182,14 @@ let find_eti_methode nom nomMethode parametres  (env : envT) =
 (* ----------------------  Corp Generation Code ------------------------------ *)
 
 
-let rec compileFunDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
+let rec compileFunObjectDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
   output_string chan "\t\t-- compileFunDecl\n";
   let eti = makeEtiMethod f.nom in
 
   output_string chan (eti^": NOP--- "^(f.nom)^"\n");
 
   let hashO = Hashtbl.find !table.objet objectName in
+
   let mparam = (f.nom,List.map (fun (x:Ast.decl) ->x.typ) f.para) in
   Hashtbl.add hashO.methEti mparam eti;
 
@@ -218,26 +232,71 @@ let rec compileFunDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
             output_string chan ("\tSTORE 0 -- stocker resultat\n");
             *)
             ();
-;
+  ;
   env;
 
 
-and compileExprParent (x : superO) env chan = env
-(*
+  and compileFunClasseDecl (className:string) (f : Ast.funDecl) (env : envT) chan =
+    output_string chan "\t\t-- compileFunDecl\n";
+    let eti = makeEtiMethod f.nom in
+  
+    output_string chan (eti^": NOP--- "^(f.nom)^"\n");
+  
+    let hashO = Hashtbl.find !table.classe className in
+  
+    let mparam = (f.nom,List.map (fun (x:Ast.decl) ->x.typ) f.para) in
+    Hashtbl.add hashO.methEti mparam eti;
+  
+    let nbArgs = List.length f.para in
+    let idRetour =  ((-nbArgs)-2) in
+    let variables = Hashtbl.create 50 in
+  
+    Hashtbl.add variables "this" (-1,className);
+  
+    (*si la fonction retourne qqc on declare result*)
+    match f.typ with
+    |None->();
+    |Some x-> Hashtbl.add variables "result" (idRetour,x);
+    ;
+  
+    (*equivalent d'un for *)
+    let rec aux (para : Ast.decl list) i =
+      match para with
+      | [] -> ()
+      | x::s -> begin
+                Hashtbl.add variables x.lhs (i,x.typ);
+                aux s (i+1);
+                end
+    in aux (f.para) (-nbArgs-1);
+  
+    cptIdDecl:= 0;
+    let _ = compileBloc (f.corp) variables chan in
+    let _ = compileReturn variables chan in
+    match f.typ with
+    | None -> (); (*Todo : ??? *)
+    | Some x ->
+              ();
+    ;
+    env;
+
+
+and compileExprParent (x : superO) env chan =  
+    
     let nbArgs = List.length (x.para) in 
     let eti = ("Cons_"^(x.ex)) in
-
-    List.iter (fun (e: expType) -> compileExpr e env chan) (x.para);
+    
+    List.iter (fun e -> let _ = compileExpr e env chan in ()) (x.para);
 
     output_string chan ("\tPUSHA "^eti^"--addr fonction \n");
     output_string chan ("\tCALL --appel fonction \n");
     output_string chan ("\tPOPN " ^ string_of_int (nbArgs+1) ^ "--Depiler les arguments\n");
     env
-    *)
 
 and compileConsDecl (c : consDecl) (env : envT) chan =
 
-  let _ = makeEtiCons c.nom in
+  output_string chan ("\t-- Constructor \n");
+
+  output_string chan (makeEtiCons c.nom );
 
   let _ = 
   match c.superrr with
@@ -247,7 +306,6 @@ and compileConsDecl (c : consDecl) (env : envT) chan =
 
   (*TOdo : gerer this dans constructeur *)
   (*Todo: creer variables locales *)
-
   let hashC = Hashtbl.find !table.classe c.nom in
   (*on store ce qui ne vient pas du parent *)
   Hashtbl.iter (fun nom decl ->
@@ -304,24 +362,24 @@ and compileAttrib objectName decl (env : envT) chan =
           env (*Todo : ???*)
 
 
-and compileClassMember cm (env : envT) chan =
+and compileClassMember classeName cm (env : envT) chan =
   output_string chan "\t-- compileClassMember\n";
   match cm with
-    Fun f -> compileFunDecl "" f env chan
+    Fun f -> compileFunClasseDecl classeName f env chan
   | Con c -> compileConsDecl c env chan
-  | Att d -> compileAttrib "" d (compileDecl d env chan) chan
+  | Att d -> env (*compileAttrib classeName d (compileDecl d env chan) chan*)
 
 
-and compileLClassMember lcm (env : envT) chan =
+and compileLClassMember className lcm (env : envT) chan =
   match lcm with
     [] -> env
-  | he::ta -> compileLClassMember ta (compileClassMember he env chan) chan
+  | he::ta -> compileLClassMember className ta (compileClassMember className he env chan) chan
 
 
 (*j'ai mis dans une fonction a par au cas ou mais peut etre pareil que classe *)
 and compileObjectMember objectName cm (env : envT) chan =
   match cm with
-    Fun f -> compileFunDecl objectName f env chan
+    Fun f -> compileFunObjectDecl objectName f env chan
   | Con c -> env (*failwith *)
   | Att d -> compileAttrib objectName d env chan
 
@@ -354,14 +412,19 @@ and compileObject obj (env : envT) chan =
 
 
 (* cls : class, env : environment (structure abstraite), chan : string buffer *)
-and compileClass cls (env : envT) chan =
+and compileClass (cls: classDecl) (env : envT) chan =
   output_string chan "-- compileClass\n";
   (*fillClass cls;*)
   output_string chan ("JUMP EndCl_" ^ (string_of_int (!cptIdCO + 1)) ^ "\n"); (* has not been incremented yet *)
   output_string chan (makeEtiClassOrObj ());
   (* TODO ALLOC *)
+
+  (*
   let nEnv = compileLDecl cls.para env chan in
-  let _ = compileLClassMember cls.cbl nEnv chan in
+  *)
+  let nEnv = env in
+
+  let _ = compileLClassMember (cls.nom) cls.cbl nEnv chan in
   output_string chan ("EndCl_" ^ (string_of_int !cptIdCO) ^ ": NOP\n");
   env;
 
@@ -439,8 +502,19 @@ and compileExpr exp (env : envT) chan  =
                     env
   | Selec (e, s) -> (*Todo : seul le cas object est geree *)
                     let typeExpr = expr_to_string e env s in
-                    let objetHash = Hashtbl.find !table.objet typeExpr in
-                    let idAttr = Hashtbl.find objetHash.attrIndex s in
+
+                    let idAttr = 
+                      if (Hashtbl.mem (!table.objet) typeExpr) then 
+                      begin
+                        let hashO = Hashtbl.find !table.objet typeExpr in
+                        Hashtbl.find hashO.attrIndex s
+                      end
+                      else 
+                      begin
+                      let hashC = Hashtbl.find !table.classe typeExpr in
+                      Hashtbl.find hashC.attrIndex s  
+                    end
+                    in
                     let _ = compileExpr e env chan in(*Todo? utiliser retour ?*)
                     output_string chan ("\tLOAD "^(string_of_int idAttr)^" -- On charge l'attribut "^s^"\n");
 
@@ -479,6 +553,7 @@ and compileExpr exp (env : envT) chan  =
                                     else env
                       | _->  (*Todo *)
                                 begin
+                                print_string "cas call";
                                 let nomCO = expr_to_string e env s in
                                 let nbArgs = List.length el in
                                 let (eti,meth) = find_eti_methode nomCO s el env in
@@ -499,8 +574,19 @@ and compileExpr exp (env : envT) chan  =
   | Inst (s, el) -> 	 
                       let hashC = Hashtbl.find !table.classe s in
                       let nb = Hashtbl.length hashC.attr in
-                      output_string chan ("\tALLOC "^(string_of_int nb)^"\n");
+                      let nbArgs = List.length el in
+                      
                       output_string chan ("-- instantier un objet de classe"^s^"\n");
+                      
+                      output_string chan ("\tALLOC "^(string_of_int nb)^"\n");
+                      output_string chan ("\tPUSHN 1 --On prepare le retour de la fonction\n");
+
+                      output_string chan ("\tPUSHA Cons_"^s^"--addr fonction \n");
+                      output_string chan ("\tCALL --appel fonction \n");
+                      output_string chan ("\tPOPN " ^ string_of_int (nbArgs+1) ^ "--Depiler les arguments\n");
+
+
+
                       env
                       (*Todo : serait un call du constructeur (et rien d'autre ??*)
                       
@@ -604,7 +690,6 @@ and compileBloc bl (env : envT) chan =
       [] -> env
     | he::ta -> compileLInstr ta (compileInstr he en chan) chan
   in
-  print_int !cptIdDecl;
   let tempEnv = compileLDecl ld (Hashtbl.copy env) chan in
   compileLInstr li tempEnv chan
   ;;
@@ -612,15 +697,16 @@ and compileBloc bl (env : envT) chan =
 
 let preRemplirAttribut (a: decl) (c: classDecl)=  
 
+
   let hashC = Hashtbl.find !table.classe c.nom in
 
   (*on ajoute les nouveaux attributs pas present dans classe mere *)
   if (Hashtbl.mem hashC.attrIndex c.nom) then ()(*si deja existant (donc dans classe parent *)(*Todo : sauf si var *)
   else
   begin
-    hashC.attrCpt := (!(hashC.attrCpt) +1);
     Hashtbl.add hashC.attrIndex a.lhs (!(hashC.attrCpt));
     Hashtbl.add hashC.attrIndexNotParent a.lhs (!(hashC.attrCpt));
+    hashC.attrCpt := (!(hashC.attrCpt) +1);
   end
 
 ;;
@@ -629,7 +715,7 @@ let preRemplirAttribut (a: decl) (c: classDecl)=
 let preRemplirClasse (c : classDecl) =
 
   let hashC = Hashtbl.find !table.classe c.nom in
-
+  (*print_string ("nom classe : "^c.nom^"\n");*)
   (*on ajoute les id des variables des parents*)
   match c.ext with
   | Some x -> 
@@ -645,6 +731,8 @@ let preRemplirClasse (c : classDecl) =
       | Con f -> ();
       | Att a -> preRemplirAttribut a c;
   ) c.cbl;
+
+  List.iter (fun x -> preRemplirAttribut x c) c.para;
 
 ;;
 
@@ -672,6 +760,9 @@ let compile codl main chan =
     output_string chan "Main: NOP      --Debut Main\n";
     compileBloc main env chan
   in
+  
+  preRemplirClasseOrdre (); (* on rempli les hash des variables dans l'ordre *)
+
   output_string chan "START\n";
   cptIdDecl := 1;
   let _ = compileMain main (compileLCO codl (Hashtbl.create 50)) chan in
