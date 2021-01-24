@@ -475,34 +475,64 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
     | Return oe -> 
         begin
         match quelbloc with 
-        | Classe -> ()
-        (*(Hashtbl.find (!table.classe) (snd infomethod)).typ*)
-                (*
+        | Classe -> 
+          begin
+           match oe with 
+           | None -> () 
+           | Some oe -> 
                 let inf = Hashtbl.find (!table.classe) (fst infomethod) in
                     let ht = Hashtbl.find (inf.meth) (snd infomethod) in
-              if ht =  expr_to_typestring oe variables "Classe" then ()
-                      else failwith "trying to return a different type than the type method"
-                    *)
-            (*pour None -> renvoie dernière instanciation*)
-
-            (*
-            match oe with 
-            | None -> ()
-            
-              if (Hashtbl.find (!table.classe) (snd infomethod)).typ = None then ()
-                        else failwith "trying to return a different type than the type method"
-            *)
-            (*if (Hashtbl.find (!table.classe) (snd infomethod)).typ =  expr_to_typestring e variables "Classe" then ()
-                      else failwith "trying to return a different type than the type method"
-            *)
-        | Objet -> ()
+                  match oe with
+                  | Id (x : string) -> if ht.typ = Some(x) then () else failwith "trying to return a different type than the type method"
+                  | ClassID (x : string) -> if ht.typ = Some(x) then () else failwith "trying to return a different type than the type method"
+                  | Cste (c : constInt) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | CsteStr (s : constString) -> if ht.typ = Some("String") then () else failwith "trying to return a different type than the type method"
+                  | Plus (g,d) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Minus (g,d) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Div (g,d) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Times (g,d) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Concat (g,d) -> if ht.typ = Some("String") then () else failwith "trying to return a different type than the type method"
+                  | UPlus (e) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | UMinus (e) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Comp (e1,e2,e3) -> if ht.typ = Some("String") then () else failwith "trying to return a different type than the type method"
+                  (*| Cast (o,e) -> if ht.typ = Some();*)
+                   
+          end;
+        | Objet -> begin
+           match oe with 
+           | None -> () 
+           | Some oe -> 
+                let inf = Hashtbl.find (!table.classe) (fst infomethod) in
+                    let ht = Hashtbl.find (inf.meth) (snd infomethod) in
+                  match oe with
+                  | Id (x : string) -> if ht.typ = Some(x) then () else failwith "trying to return a different type than the type method"
+                  | ClassID (x : string) -> if ht.typ = Some(x) then () else failwith "trying to return a different type than the type method"
+                  | Cste (c : constInt) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | CsteStr (s : constString) -> if ht.typ = Some("String") then () else failwith "trying to return a different type than the type method"
+                  | Plus (g,d) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Minus (g,d) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Div (g,d) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Times (g,d) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Concat (g,d) -> if ht.typ = Some("String") then () else failwith "trying to return a different type than the type method"
+                  | UPlus (e) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | UMinus (e) -> if ht.typ = Some("Integer") then () else failwith "trying to return a different type than the type method"
+                  | Comp (e1,e2,e3) -> if ht.typ = Some("String") then () else failwith "trying to return a different type than the type method"
+                  (*| Cast (o,e) -> if ht.typ = Some();*)
+                   
+          end;
           (*
             let inf = Hashtbl.find (!table.objet) (fst infomethod) in
                     let ht = Hashtbl.find (inf.meth) (snd infomethod) in
               if ht =  expr_to_typestring oe variables "Classe" then ()
                       else failwith "trying to return a different type than the type method"
           *)
-        | Main -> ()
+        | Main -> 
+              match oe with 
+             | None -> () 
+             | Some oe ->
+                  match oe with 
+                  | Cste (c : constInt) -> if c <> Int(0) then failwith "You must return 0"
+                  | _ -> failwith "You must return 0"
         
       end
     
