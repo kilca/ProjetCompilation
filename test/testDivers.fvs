@@ -18,13 +18,6 @@ object ObjC is {
 }
 
 {
-<<<<<<< HEAD
-  b : Integer := 9;
-  is
-  A.test(4);
-  b.toString().println();
-}
-=======
   b1: ClsB := new ClsB(2);
   b2: ClsB := new ClsB(5);
   is
@@ -49,4 +42,3 @@ object ObjC is {
   b2.attS := "FIN !";
   b2.attS.println();
 }
->>>>>>> b523ed731bfd9e2759b3499dccd91ddf5dfec387

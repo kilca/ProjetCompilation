@@ -1,6 +1,14 @@
 
 object C is {  
-  def test() is {
+  def testC() is {
+    c : Integer := 4;
+    is
+    "coucou".println();
+  }    
+}
+
+object A is {  
+  def testA() is {
     c : Integer := 4;
     is
     "coucou".println();
@@ -10,6 +18,6 @@ object C is {
 {
   a : Integer := 2;
   is
-  C.test();
+  C.testA();
   a.toString().println();
 }

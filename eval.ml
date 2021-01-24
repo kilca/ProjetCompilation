@@ -20,6 +20,7 @@ type classHash = {
 
   attrCpt : int ref;
   attrIndex : ((string, int) Hashtbl.t);
+  attrIndexNotParent : ((string, int) Hashtbl.t);
   methEti : ((methParam, string) Hashtbl.t);
   index : int ref;
 };;
@@ -35,6 +36,8 @@ type objetHash = {
   methEti : ((methParam, string) Hashtbl.t);
   index : int ref;
 };;
+
+let classeOrdre = ref [];;
 
 type tableCO = 
   { 
@@ -103,6 +106,9 @@ let ajouterMeth (a : funDecl) r =
 
 (* rempli la classe *)
 let remplirClasse (x: classDecl) (parent: classHash option)= 
+
+  classeOrdre := x::(!classeOrdre);
+
   if (Hashtbl.mem !table.objet x.nom || Hashtbl.mem !table.objet x.nom) 
   then failwith ("error a class or objet with name "^x.nom^" already exist") 
   else
@@ -128,6 +134,7 @@ let remplirClasse (x: classDecl) (parent: classHash option)=
     |None ->failwith ("error there is no constructor in "^x.nom)
     |Some sc -> Hashtbl.add !table.classe x.nom 
                 {data=x;attr=atable;meth=mtable;cons=sc;
+                attrIndexNotParent = Hashtbl.create 50;
                 attrIndex= Hashtbl.create 50;methEti = Hashtbl.create 50;attrCpt = ref 0;
                 index = ref 0;
                 };

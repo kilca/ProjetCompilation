@@ -38,6 +38,8 @@ and makeEtiClassOrObj () =
   cptIdCO := !cptIdCO + 1;
   retour
 
+and makeEtiCons name = ("Cons_"^name^": NOP \n")
+
 and makeEtiITE () = (* generateur d'etiquettes fraiches pour ITE *)
   let sv = string_of_int !cptEtiITE in
   cptEtiITE := !cptEtiITE + 1;
@@ -220,55 +222,62 @@ let rec compileFunDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
   env;
 
 
-and compileConsDecl (c : consDecl) (env : envT) chan =
-  (*Todo *)
-  (*Todo : Creer etiquette *)
-  (*Todo call constructeur parent *)
-  (*Todo declarer les index des attributs de la classe exemple :*)
-  
-  (*
-  let hashC = Hashtbl.find !table.classe c.nom in
+and compileExprParent (x : superO) env chan =
+    let nbArgs = List.length (x.para) in 
+    let eti = ("Cons_"^(x.ex)) in
 
+    List.iter (fun (e: expType) -> compileExpr e env chan) (x.para);
+
+    output_string chan ("\tPUSHA "^eti^"--addr fonction \n");
+    output_string chan ("\tCALL --appel fonction \n");
+    output_string chan ("\tPOPN " ^ string_of_int (nbArgs+1) ^ "--Depiler les arguments\n");
+    env
+
+and compileConsDecl (c : consDecl) (env : envT) chan =
+
+  let _ = makeEtiCons c.nom in
+
+  let _ = 
   match c.superrr with
-  | Some x -> let hashCParent = Hashtbl.find !table.classe x.ex in
-              hashC.attrIndex = Hashtbl.copy (hashCParent.attrIndex);
-              hashC.attrCpt := !hashCParent.attrCpt;
-  | None -> ();
-  ;
-  
-  Hashtbl.iter (fun nom decl -> 
-    if (not (Hashtbl.mem hashC nom)) then
-    begin
-      Hashtbl.add (hashC.attr) nom !hashC.attrCpt; 
-      hashC.attrCpt := !hashC.attrCpt + 1;
-    end
-  
-  ) hashC.attr
-    
-    *)
-    (*Todo : assigner les parametres du constructeur aux attributs : (les outputs seront les suivants)*)
-    
-    (*
-  let currId = ref 0 in
-    Hashtbl.iter (fun nom decl -> 
-    let _ =
-      match decl.rhs with
-      |Some e -> let _ = 
-                output_string chan ("\tDUPN 1\n");
-                compileExpr e env chan in
-                let currIdStr = string_of_int (!currId) in
-                output_string chan ("\tSTORE "^currIdStr^"\n");
-                env
-      | None -> env
-      in
-      currId := (!currId + 1);
+  |None ->env
+  |Some x -> compileExprParent x env chan
+  in
+
+  (*TOdo : gerer this dans constructeur *)
+  (*Todo: creer variables locales *)
+
+  let hashC = Hashtbl.find !table.classe c.nom in
+  (*on store ce qui ne vient pas du parent *)
+  Hashtbl.iter (fun nom decl ->
+        
+          if (Hashtbl.mem hashC.attrIndexNotParent nom)
+          then
+          begin
+            let currId = Hashtbl.find hashC.attrIndexNotParent nom in
+            match decl.rhs with
+            |Some e -> let _ = 
+                      output_string chan ("\tDUPN 1\n");
+                      compileExpr e env chan in
+                      let currIdStr = string_of_int (currId) in
+                      output_string chan ("\tSTORE "^currIdStr^"\n");
+            | None -> ()
+          end
+          else ();
 
   ) hashC.attr;
-  env
-  *)
 
-  (*Todo : compiler corp fonction *)
-  env
+  (*on assigne les parametres du constructeur*)
+  let cpt = ref (-1) in
+  List.iter (fun d -> 
+      let ind = Hashtbl.find hashC.attrIndex d.lhs in
+      output_string chan ("\tDUPN 1\n");
+      output_string chan ("\tPUSHL "^string_of_int (!cpt)^"\n");   
+      output_string chan ("\tSTORE "^string_of_int (ind)^"\n");    
+      cpt := ((!cpt) -1)
+  ) c.para;
+
+  (*Todo : set variables locales *)
+  compileBloc c.bloc env chan
 
 and compileAttrib objectName decl (env : envT) chan =
   let nomObjet = objectName in  
@@ -311,7 +320,7 @@ and compileLClassMember lcm (env : envT) chan =
 and compileObjectMember objectName cm (env : envT) chan =
   match cm with
     Fun f -> compileFunDecl objectName f env chan
-  | Con c -> failwith "error object with constructor"
+  | Con c -> env (*failwith *)
   | Att d -> compileAttrib objectName d env chan
 
 
@@ -596,6 +605,50 @@ and compileBloc bl (env : envT) chan =
   print_int !cptIdDecl;
   let tempEnv = compileLDecl ld (Hashtbl.copy env) chan in
   compileLInstr li tempEnv chan
+  ;;
+
+
+let preRemplirAttribut (a: decl) (c: classDecl)=  
+
+  let hashC = Hashtbl.find !table.classe c.nom in
+
+  (*on ajoute les nouveaux attributs pas present dans classe mere *)
+  if (Hashtbl.mem hashC.attrIndex c.nom) then ()(*si deja existant (donc dans classe parent *)(*Todo : sauf si var *)
+  else
+  begin
+    hashC.attrCpt := (!(hashC.attrCpt) +1);
+    Hashtbl.add hashC.attrIndex a.lhs (!(hashC.attrCpt));
+    Hashtbl.add hashC.attrIndexNotParent a.lhs (!(hashC.attrCpt));
+  end
+
+;;
+
+
+let preRemplirClasse (c : classDecl) =
+
+  let hashC = Hashtbl.find !table.classe c.nom in
+
+  (*on ajoute les id des variables des parents*)
+  match c.ext with
+  | Some x -> 
+              let hashCParent = Hashtbl.find !table.classe x in
+              Hashtbl.iter (fun a b -> Hashtbl.add hashC.attrIndex a b) (hashCParent.attrIndex);
+              hashC.attrCpt := !(hashCParent.attrCpt);
+  | None -> ();
+  ;
+
+  List.iter (fun cb ->
+      match cb with
+      | Fun f -> ();
+      | Con f -> ();
+      | Att a -> preRemplirAttribut a c;
+  ) c.cbl;
+
+;;
+
+(*on rempli les id attributs des classes dans l'ordre d'heritage *)  
+let preRemplirClasseOrdre () =
+  List.iter (preRemplirClasse) (!classeOrdre);
 ;;
 
 
