@@ -220,7 +220,7 @@ let rec compileFunDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
   env;
 
 
-and compileConsDecl c (env : envT) chan =
+and compileConsDecl (c : consDecl) (env : envT) chan =
   (*Todo *)
   (*Todo : Creer etiquette *)
   (*Todo call constructeur parent *)
@@ -229,9 +229,9 @@ and compileConsDecl c (env : envT) chan =
   (*
   let hashC = Hashtbl.find !table.classe c.nom in
 
-  match c.ext with
-  | Some x -> let hashCParent = Hashtbl.find !table.classe x in
-              hashC.attrIndex = Hashtbl.copy hashCParent.attrIndex;
+  match c.superrr with
+  | Some x -> let hashCParent = Hashtbl.find !table.classe x.ex in
+              hashC.attrIndex = Hashtbl.copy (hashCParent.attrIndex);
               hashC.attrCpt := !hashCParent.attrCpt;
   | None -> ();
   ;
@@ -244,8 +244,8 @@ and compileConsDecl c (env : envT) chan =
     end
   
   ) hashC.attr
-    *)
     
+    *)
     (*Todo : assigner les parametres du constructeur aux attributs : (les outputs seront les suivants)*)
     
     (*
@@ -311,7 +311,7 @@ and compileLClassMember lcm (env : envT) chan =
 and compileObjectMember objectName cm (env : envT) chan =
   match cm with
     Fun f -> compileFunDecl objectName f env chan
-  | Con c -> compileConsDecl c env chan
+  | Con c -> failwith "error object with constructor"
   | Att d -> compileAttrib objectName d env chan
 
 
@@ -593,6 +593,7 @@ and compileBloc bl (env : envT) chan =
       [] -> env
     | he::ta -> compileLInstr ta (compileInstr he en chan) chan
   in
+  print_int !cptIdDecl;
   let tempEnv = compileLDecl ld (Hashtbl.copy env) chan in
   compileLInstr li tempEnv chan
 ;;
@@ -612,6 +613,7 @@ let compile codl main chan =
     | he::ta -> compileLCO ta (compileClassOrObj he env chan)
   and compileMain main (env : envT) chan =
     currCO := "";
+    cptIdDecl:= 0;
     output_string chan "Main: NOP      --Debut Main\n";
     compileBloc main env chan
   in

@@ -1,0 +1,15 @@
+
+object C is {  
+  def test() is {
+    c : Integer := 4;
+    is
+    "coucou".println();
+  }    
+}
+
+{
+  a : Integer := 2;
+  is
+  C.test();
+  a.toString().println();
+}
