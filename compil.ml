@@ -222,7 +222,8 @@ let rec compileFunDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
   env;
 
 
-and compileExprParent (x : superO) env chan =
+and compileExprParent (x : superO) env chan = env
+(*
     let nbArgs = List.length (x.para) in 
     let eti = ("Cons_"^(x.ex)) in
 
@@ -232,6 +233,7 @@ and compileExprParent (x : superO) env chan =
     output_string chan ("\tCALL --appel fonction \n");
     output_string chan ("\tPOPN " ^ string_of_int (nbArgs+1) ^ "--Depiler les arguments\n");
     env
+    *)
 
 and compileConsDecl (c : consDecl) (env : envT) chan =
 
