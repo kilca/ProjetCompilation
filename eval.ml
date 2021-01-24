@@ -555,20 +555,20 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
           | Classe -> 
               if expr_to_typestring el variables "Classe" = expr_to_typestring er variables "Classe" then ()
                 else failwith "trying to assigne 2 different types" ; 
-              if !table.objet.mem (expr_to_typestring el variables "Classe") then failwith "trying to assigne an object"
+              if Hashtbl.mem !table.objet (expr_to_typestring el variables "Classe") then failwith "trying to assigne an object"
                 else ()
           | Objet -> 
               
               if expr_to_typestring el variables "Objet" = expr_to_typestring er variables "Objet" then ()
                 else failwith "trying to assigne 2 different types" ;
-              if !table.objet.mem (expr_to_typestring el variables "Objet") then failwith "trying to assigne an object"
+              if Hashtbl.mem !table.objet (expr_to_typestring el variables "Objet") then failwith "trying to assigne an object"
                 else ()
               
           | Main -> 
               
               if expr_to_typestring el variables "Main" = expr_to_typestring er variables "Main" then ()
                 else failwith "trying to assigne 2 different types" ;
-              if !table.objet.mem (expr_to_typestring el variables "Main") then failwith "trying to assigne an object"
+              if Hashtbl.mem !table.objet (expr_to_typestring el variables "Main") then failwith "trying to assigne an object"
                 else ()
               
       
