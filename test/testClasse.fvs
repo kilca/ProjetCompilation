@@ -1,0 +1,11 @@
+class A (var v : Integer) is {
+
+  def A(var v :Integer) is {
+
+  }
+}
+{
+  a: A := new A();
+  is
+  "nothing".println();
+}

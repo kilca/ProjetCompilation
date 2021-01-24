@@ -223,24 +223,25 @@ and compileConsDecl c (env : envT) chan =
 
 
 and compileAttrib objectName decl (env : envT) chan =
- 
-  let _=
-  match decl.rhs with
-  |Some e -> compileExpr e env chan
-  | None -> env (*???*)
-  in
-
+  let nomObjet = objectName in  
+  let currObjet = (Hashtbl.find (!table.objet) nomObjet) in  
   let nomAttribut = decl.lhs in
-  let nomObjet = objectName in
-
-  let currObjet = (Hashtbl.find (!table.objet) nomObjet) in
   let currId = currObjet.attrCpt in
-  let currIdStr = string_of_int (!currId) in
-  Hashtbl.add currObjet.attrIndex nomAttribut !currId;
-
-  output_string chan ("STORE "^currIdStr^"\n");
-  currObjet.attrCpt := !(currObjet.attrCpt) + 1;
-  env
+  match decl.rhs with
+  |Some e -> (*si declare*)
+          output_string chan "DUPN 1\n";(*on dupplique l'adresse de l'objet pour la store *)
+          let retour = compileExpr e env chan in
+        
+          let currIdStr = string_of_int (!currId) in
+          Hashtbl.add currObjet.attrIndex nomAttribut !currId;
+        
+          output_string chan ("STORE "^currIdStr^"\n");
+          currObjet.attrCpt := !(currObjet.attrCpt) + 1;
+          retour
+  | None ->  (*si non declare *)
+          Hashtbl.add currObjet.attrIndex nomAttribut !currId;
+          currObjet.attrCpt := !(currObjet.attrCpt) + 1;
+          env (*Todo : ???*)
 
 
 and compileClassMember cm (env : envT) chan =
@@ -268,7 +269,6 @@ and compileLObjectMember objectName lcm (env : envT) chan =
   match lcm with
     [] -> env
   | he::ta -> 
-  output_string chan "DUPN 1\n";(*on dupplique l'adresse de l'objet pour la store *)
   compileLObjectMember objectName ta (compileObjectMember objectName he env chan) chan
   
 (* obj : object, env : environment (structure abstraite), chan : string buffer *)
@@ -416,14 +416,28 @@ and compileExpr exp (env : envT) chan  =
                                 env
                                 end
                     end
-  | Inst (s, el) -> 	output_string chan ("-- instantier un objet de classe"^s);env
+  | Inst (s, el) -> 	output_string chan ("-- instantier un objet de classe"^s^"\n");
                       (*Todo *)
-                      (*
-                      ALLOC 1 -- a
-                      DUPN 1
-                      PUSHG 0
-                      STORE 0
-                      *)
+                      let hashC = Hashtbl.find !table.classe s in
+                      let nb = Hashtbl.length hashC.attr in
+                      let currId = ref 0 in
+                      output_string chan ("ALLOC "^(string_of_int nb)^"\n");
+                      Hashtbl.iter (fun nom decl -> 
+                        
+                        let _ =
+                          match decl.rhs with
+                          |Some e -> let _ = 
+                                    output_string chan ("DUPN 1\n");
+                                    compileExpr e env chan in
+                                    let currIdStr = string_of_int (!currId) in
+                                    output_string chan ("STORE "^currIdStr^"\n");
+                                    env
+                          | None -> env
+                          in
+                          currId := (!currId + 1);
+              
+                      ) hashC.attr;
+                      env
 
 (* SUB INSTR *)
 

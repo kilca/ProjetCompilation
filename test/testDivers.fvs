@@ -1,13 +1,9 @@
 object A is {  
-  var val : String := "aaaa";        
-  def pval(v : Integer) : Integer is {
-    v.toString().println();
-    this.val.println();
-    return 9;
-  } 
+  var val : String; 
+  var val2 : String := "val";       
 }
 {
-  r : Integer := A.pval(2);
-  is 
-  r.toString().println();
+  A.val := "bruh";
+  A.val.print();
+  "coucou".println();
 }
