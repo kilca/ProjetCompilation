@@ -346,7 +346,7 @@ and compileClass cls (env : envT) chan =
   output_string chan (makeEtiClassOrObj ());
   (* TODO ALLOC *)
   let nEnv = compileLDecl cls.para env chan in
-  compileLClassMember cls.cbl nEnv chan;
+  let _ = compileLClassMember cls.cbl nEnv chan in
   output_string chan ("EndCl_" ^ (string_of_int !cptIdCO) ^ ": NOP\n");
   env;
 
