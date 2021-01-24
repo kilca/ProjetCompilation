@@ -1,14 +1,52 @@
-object A is {  
-  var chp1 : Integer := 33;        
-  def test(c : Integer) is{
-    a : Integer := 5;
-    is
-    "bruh".println();
+object ObjA is {  
+  var valA : Integer := 42; 
+  var lavA : String := "LOL";       
+}
+
+class ClsB (var v : Integer) is {
+  var attS : String := "MDR";
+  var attI : Integer;
+
+  def ClsB(var v :Integer) is {
+	attI := v;
   }
 }
+
+object ObjC is {  
+  var valC : Integer := 420; 
+  var lavC : String := "LOLILOL";       
+}
+
 {
+<<<<<<< HEAD
   b : Integer := 9;
   is
   A.test(4);
   b.toString().println();
 }
+=======
+  b1: ClsB := new ClsB(2);
+  b2: ClsB := new ClsB(5);
+  is
+  ObjA.valA.toString().print();
+  " coucou ".println();
+  ObjA.valA := 69;
+  ObjA.valA.toString().print();
+  ObjA.lavA.print();
+  
+  b1.attI := 101;
+  b1.attI.toString().println();
+  b1.attS.println();
+  
+  
+  ObjC.valC.toString().print();
+  ObjC.valC := 96;
+  " coucou2 ".println();
+  ObjC.valC.toString().print();
+  
+  b2.attI := 12;
+  b2.attI.toString().println();
+  b2.attS := "FIN !";
+  b2.attS.println();
+}
+>>>>>>> b523ed731bfd9e2759b3499dccd91ddf5dfec387
