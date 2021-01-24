@@ -34,8 +34,9 @@ let makeEtiMethod nomMethode = (* generateur d'etiquettes fraiches pour methodes
   "METHOD" ^ (string_of_int !cptEtiMeth)
 
 and makeEtiClassOrObj () =
+  let retour = "ClObj_" ^ (string_of_int !cptIdCO) ^ ": NOP\n" in
   cptIdCO := !cptIdCO + 1;
-  "ClObj_" ^ (string_of_int !cptIdCO) ^ ": NOP\n"
+  retour
 
 and makeEtiITE () = (* generateur d'etiquettes fraiches pour ITE *)
   let sv = string_of_int !cptEtiITE in
@@ -277,6 +278,7 @@ and compileAttrib objectName decl (env : envT) chan =
   match decl.rhs with
   |Some e -> (*si declare*)
           output_string chan "\tDUPN 1 -- DUPN compileAttrib\n";(*on dupplique l'adresse de l'objet pour la store *)
+          
           let retour = compileExpr e env chan in
         
           let currIdStr = string_of_int (!currId) in
@@ -318,18 +320,20 @@ and compileLObjectMember objectName lcm (env : envT) chan =
   match lcm with
     [] -> env
   | he::ta ->
-  output_string chan "\tDUPN 1 -- DUPN compileLObjectMember\n"; (* on duplique l'adresse de l'objet pour la store *)
+  (*output_string chan "\tDUPN 1 -- DUPN compileLObjectMember\n"; *)(* on duplique l'adresse de l'objet pour la store *)
   compileLObjectMember objectName ta (compileObjectMember objectName he env chan) chan
 
 
 (* obj : object, env : environment (structure abstraite), chan : string buffer *)
 and compileObject obj (env : envT) chan =
   output_string chan ("\t-- compileObject " ^ obj.nom ^ "\n");
-  output_string chan (makeEtiClassOrObj ());
 
   (*a mettre dans compileClassMember? *)
   let currentHash = Hashtbl.find !table.objet obj.nom in
   currentHash.index := !cptIdCO;
+
+  output_string chan (makeEtiClassOrObj ());
+
   let nombreAttribut = Hashtbl.length currentHash.attr in
   let nombreAttributStr = string_of_int nombreAttribut in
 
@@ -476,7 +480,7 @@ and compileExpr exp (env : envT) chan  =
                                 let _ = compileExpr e env chan in (*On prepare le this *)
                                 output_string chan ("\tPUSHA "^eti^"--addr fonction \n");
                                 output_string chan ("\tCALL --appel fonction \n");
-                                output_string chan ("\tPOPN " ^ string_of_int nbArgs ^ "--Depiler les arguments\n");
+                                output_string chan ("\tPOPN " ^ string_of_int (nbArgs+1) ^ "--Depiler les arguments\n");
                                 (*TODO : LOAD ?*)
                                 env
                                 end
