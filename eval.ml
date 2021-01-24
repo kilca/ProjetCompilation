@@ -337,7 +337,25 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
   | Inst (s,el) ->  (*si l'expression est un new C()*)
   begin
     if (not (Hashtbl.mem !table.classe s)) then failwith ("la classe instantiee n'existe pas : "^s)
-    else print_string "TODO Check param instantiation";s
+  else 
+    begin
+      let attrEnTete = (Hashtbl.find !table.classe s).attr  in (*on recupere la liste des attributs en en tete de classe*)  
+      (* attrEnTete est pour le moment une hashtabme ùais il faut que ça soit une liste *)   
+      let plstAttrEnTete = ref [] in
+      Hashtbl.iter (fun x y -> plstAttrEnTete:= y::(!plstAttrEnTete)) attrEnTete;
+      let lstAttrEnTete = !plstAttrEnTete in
+      if (Hashtbl.length attrEnTete) <> (List.length el) then 
+        begin
+          failwith ("mauvais nombre de parametre") (*on compare les tailles qui doivent etre egale*)
+        end
+        else
+        begin (*on compare si les attributs entre entete et instanciation*)
+          List.iter2 (fun (a : expType) (b : decl) ->
+           if ( (expr_to_typestring a variables lieu) <> b.typ (*???*)) then failwith ("type de parametre non correspondant")
+          ) el lstAttrEnTete;
+           ""
+        end
+    end
   end
 ;;
 
