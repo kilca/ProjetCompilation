@@ -1,9 +1,14 @@
 object A is {  
-  var val : String; 
-  var val2 : String := "val";       
+  var chp1 : Integer := 33;        
+  def test(c : Integer) is{
+    a : Integer := 5;
+    is
+    "bruh".println();
+  }
 }
 {
-  A.val := "bruh";
-  A.val.print();
-  "coucou".println();
+  b : Integer := 9;
+  is
+  A.test(4);
+  b.toString().println();
 }

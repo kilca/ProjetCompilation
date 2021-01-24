@@ -18,6 +18,7 @@ object C is {
   def h(x: Integer, y : Integer) : Integer is {
     x.toString().println();
     y.toString().println();
+    this.chp2.toString().println();
     return x+y;
   }
 }
