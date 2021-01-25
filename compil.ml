@@ -297,6 +297,7 @@ and compileExprParent (x : superO) env chan =
     
     List.iter (fun e -> let _ = compileExpr e env chan in ()) (x.para);
 
+    output_string chan ("\tPUSHL -1 --addr classe \n");
     output_string chan ("\tPUSHA "^eti^"--addr fonction \n");
     output_string chan ("\tCALL --appel fonction \n");
     output_string chan ("\tPOPN " ^ string_of_int (nbArgs+1) ^ "--Depiler les arguments\n");
@@ -308,11 +309,19 @@ and compileConsDecl (c : consDecl) (env : envT) chan =
 
   output_string chan (makeEtiCons c.nom );
 
+  (*On init les variables pour le bloc *)
+  let variables = Hashtbl.create 50 in
+  let cptP = ref (-2) in
+  List.iter (fun x ->
+     Hashtbl.add variables (x.lhs) ((!cptP),x.typ); 
+     cptP := (!cptP -1);
+     ) c.para;
+
   output_string chan ("\t\t-- On compile les attr du parent\n");
   let _ = 
   match c.superrr with
   |None ->env
-  |Some x -> compileExprParent x env chan
+  |Some x -> compileExprParent x variables chan
   in
   output_string chan ("\t\t-- On compile les attr locales (vide si non defini)\n");
   (*TOdo : gerer this dans constructeur *)
@@ -339,24 +348,20 @@ and compileConsDecl (c : consDecl) (env : envT) chan =
   ) hashC.attr;
 
   output_string chan ("\t\t-- On set les attr donnes en parametre\n");
-
-  (*On init les variables pour le bloc *)
-  let variables = Hashtbl.create 50 in
-  let cptP = ref (-2) in
-  List.iter (fun x ->
-     Hashtbl.add variables (x.lhs) ((!cptP),x.typ); 
-     cptP := (!cptP -1);
-     ) c.para;
   
   (*on assigne les parametres du constructeur*)
   let cpt = ref (-2) in
   List.iter (fun d -> 
-      let ind = Hashtbl.find hashC.attrIndex d.lhs in
-      output_string chan ("\tPUSHL "^string_of_int (!cpt)^"\n");   
-      output_string chan ("\tPUSHL -1\n");
-      output_string chan ("\tSWAP\n");
-      output_string chan ("\tSTORE "^string_of_int (ind)^"\n");    
-      cpt := ((!cpt) -1)
+      if (d.isVar) then
+      begin
+        let ind = Hashtbl.find hashC.attrIndex d.lhs in
+        output_string chan ("\tPUSHL "^string_of_int (!cpt)^"\n");   
+        output_string chan ("\tPUSHL -1\n");
+        output_string chan ("\tSWAP\n");
+        output_string chan ("\tSTORE "^string_of_int (ind)^"\n");    
+        cpt := ((!cpt) -1);
+      end
+      else ();
   ) c.para;
 
   output_string chan ("\t\t-- On compile le bloc et retour\n");
@@ -609,7 +614,7 @@ and compileExpr exp (env : envT) chan  =
                       (*
                       let nbArgs = List.length el in
                       *)
-                      
+
                       output_string chan ("-- instantier un objet de classe"^s^"\n");
 
                       List.iter (fun ex -> let _ = compileExpr ex env chan in ()) el;

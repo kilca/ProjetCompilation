@@ -1,6 +1,15 @@
-class A (var v : Integer) is {
+class P (var v : Integer)is
+{
+  def P(var v : Integer) is {
 
-  def A(var v :Integer) is {
+
+  }
+
+}
+
+class A (v : Integer) extends P is {
+
+  def A(v :Integer) : P(v+1) is {
 
   }
 }
