@@ -117,13 +117,16 @@ and expr_to_string exp  (env : envT) (currentClass : string)=
 
 and storeDecl expr env chan=
 	match expr with
-		Id  i ->
+    Id  i ->
       if (Hashtbl.mem env i) then
         begin
           let (id,typ) = Hashtbl.find env i in
-          output_string chan ("\tSTOREL "^(string_of_int id)^" -- store variable "^i^"\n");
+          if (i = "this") then
+          output_string chan ("\tPUSHL "^(string_of_int id)^" -- store variable "^i^"\n")
+          else
+          output_string chan ("\tSTOREL "^(string_of_int id)^" -- store variable "^i^"\n")
         end
-      else
+        else
         begin
           (*Todo : revoir *)
           if (i = "this") then
@@ -157,8 +160,15 @@ and storeDecl expr env chan=
             Hashtbl.find hashO.attrIndex s
           end
           in
-          print_string "bbbb";
-          output_string chan ("\tSTORE "^(string_of_int (ind))^" -- stocke variable "^s^"\n")
+          print_string "Todo : check store ou push?\n";
+          (*output_string chan ("\tSTORE "^(string_of_int (ind))^" -- stocke variable "^s^"\n")*)
+          (*
+          if (s = "this") then
+          output_string chan ("\tPUSHL "^(string_of_int (ind))^" -- stocke variable "^s^"\n")
+          else
+          *)
+          output_string chan ("\tSTORE "^(string_of_int (ind))^" -- TODOCHECK variable "^s^"\n")
+
   | Call (e,s,el)-> () (*TODO *)
   |_ -> failwith "WTF LEFT ASSIGN";
 ;;
@@ -298,15 +308,17 @@ and compileConsDecl (c : consDecl) (env : envT) chan =
 
   output_string chan (makeEtiCons c.nom );
 
+  output_string chan ("\t\t-- On compile les attr du parent\n");
   let _ = 
   match c.superrr with
   |None ->env
   |Some x -> compileExprParent x env chan
   in
-
+  output_string chan ("\t\t-- On compile les attr locales (vide si non defini)\n");
   (*TOdo : gerer this dans constructeur *)
   (*Todo: creer variables locales *)
   let hashC = Hashtbl.find !table.classe c.nom in
+
   (*on store ce qui ne vient pas du parent *)
   Hashtbl.iter (fun nom decl ->
         
@@ -326,18 +338,38 @@ and compileConsDecl (c : consDecl) (env : envT) chan =
 
   ) hashC.attr;
 
+  output_string chan ("\t\t-- On set les attr donnes en parametre\n");
+
+  (*On init les variables pour le bloc *)
+  let variables = Hashtbl.create 50 in
+  let cptP = ref (-2) in
+  List.iter (fun x ->
+     Hashtbl.add variables (x.lhs) ((!cptP),x.typ); 
+     cptP := (!cptP -1);
+     ) c.para;
+  
   (*on assigne les parametres du constructeur*)
-  let cpt = ref (-1) in
+  let cpt = ref (-2) in
   List.iter (fun d -> 
       let ind = Hashtbl.find hashC.attrIndex d.lhs in
-      output_string chan ("\tDUPN 1\n");
       output_string chan ("\tPUSHL "^string_of_int (!cpt)^"\n");   
+      output_string chan ("\tPUSHL -1\n");
+      output_string chan ("\tSWAP\n");
       output_string chan ("\tSTORE "^string_of_int (ind)^"\n");    
       cpt := ((!cpt) -1)
   ) c.para;
 
+  output_string chan ("\t\t-- On compile le bloc et retour\n");
   (*Todo : set variables locales *)
-  compileBloc c.bloc env chan
+  let retour = compileBloc c.bloc variables chan in
+
+  let nbArg = List.length c.para in
+  output_string chan ("\tPOPN "^(string_of_int (nbArg+1))^"\n");
+
+  output_string chan ("\tPUSHL -1 -- On push la variable de resultat\n");
+  output_string chan ("RETURN --on repart\n");
+  retour
+
 
 and compileAttrib objectName decl (env : envT) chan =
   let nomObjet = objectName in  
@@ -574,17 +606,23 @@ and compileExpr exp (env : envT) chan  =
   | Inst (s, el) -> 	 
                       let hashC = Hashtbl.find !table.classe s in
                       let nb = Hashtbl.length hashC.attr in
+                      (*
                       let nbArgs = List.length el in
+                      *)
                       
                       output_string chan ("-- instantier un objet de classe"^s^"\n");
-                      
+
+                      List.iter (fun ex -> let _ = compileExpr ex env chan in ()) el;
                       output_string chan ("\tALLOC "^(string_of_int nb)^"\n");
-                      output_string chan ("\tPUSHN 1 --On prepare le retour de la fonction\n");
+                      
+                      (*output_string chan ("\tPUSHN 1 --On prepare le retour de la fonction\n");*)
 
                       output_string chan ("\tPUSHA Cons_"^s^"--addr fonction \n");
                       output_string chan ("\tCALL --appel fonction \n");
+                      
+                      (*
                       output_string chan ("\tPOPN " ^ string_of_int (nbArgs+1) ^ "--Depiler les arguments\n");
-
+                      *)
 
 
                       env

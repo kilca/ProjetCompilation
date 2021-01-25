@@ -1,23 +1,17 @@
+object C is{
+  a : Integer := 1;
+  b : Integer := 2;
 
-object C is {  
-  def testC() is {
-    c : Integer := 4;
-    is
-    "coucou".println();
-  }    
+  def init(z : Integer, e : Integer) is{
+    this.a := z;
+    this.b := e;
+    this.a.toString().println();
+    this.b.toString().println();
+    return 4;
+  }
 }
-
-object A is {  
-  def testA() is {
-    c : Integer := 4;
-    is
-    "coucou".println();
-  }    
-}
-
 {
-  a : Integer := 2;
-  is
-  C.testC();
-  a.toString().println();
+  C.init(4,5);
+  C.a.toString().println();
+  C.b.toString().println();
 }
