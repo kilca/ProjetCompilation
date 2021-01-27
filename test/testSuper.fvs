@@ -22,7 +22,7 @@ class A (v : Integer) extends P is {
   }
   
   def override presenter() is {
-    "JE SUIS A".println();
+    super.presenter();
   }
 
 }

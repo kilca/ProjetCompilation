@@ -1,0 +1,10 @@
+class A() is {
+  var a : Integer := "ocacaml";
+  def A() is {}
+}
+{
+  true: Integer := 1;
+  false: Integer := 0;
+  is
+  Test.test();
+}

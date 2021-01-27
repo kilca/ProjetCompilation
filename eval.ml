@@ -6,10 +6,7 @@ open Primitives
 
 (*Pour declarer variable "globale" et eviter de le redonner a chaque parametre*)
 
-(*
-string1 : nom de la fonction
-string2 list: nom des types de la fonction
-*)
+(*infos d'une methode : nom,[args] *)
 type methParam = string*string list;;
 
 type classHash = {
@@ -21,6 +18,7 @@ type classHash = {
   attrCpt : int ref;
   attrIndex : ((string, int) Hashtbl.t);
   attrIndexNotParent : ((string, int) Hashtbl.t);
+
   methEti : ((methParam, string) Hashtbl.t);
   index : int ref;
 };;
@@ -37,6 +35,7 @@ type objetHash = {
   index : int ref;
 };;
 
+(*tableau des classes dans l'ordre (qui se rempli pour la genCode) *)
 let classeOrdre = ref [];;
 
 type tableCO = 

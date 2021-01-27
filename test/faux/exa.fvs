@@ -1,3 +1,8 @@
+/*compile pas car 
+manque d'argument
+manque de this dans constructeurs 
+*/
+
 /* des exemples ad-hoc qui montrent d'autres aspects ... */
 class A() is {
    var v : Integer;
@@ -29,7 +34,7 @@ class A2() extends A is {
    a2: A2 := new A2();
  is
     a.f();
-    a.h().toString().println();
+    a.h().toString().println();/*ici et normal marche pas*/
     a2.f();
     a.h().toString().println();
     a2.g();

@@ -1,0 +1,9 @@
+class A() is {
+def A() is {}
+def b(a : Integer, a : Integer) is {}
+}
+{
+   truc : Integer;
+   is 
+   2;
+}
