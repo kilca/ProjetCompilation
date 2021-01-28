@@ -188,7 +188,8 @@ let rec haveThisParent (nomclasse : string) (nomparent : string) =
   let (parent : string option) = (Hashtbl.find (!table.classe) nomclasse).data.ext in
   match parent with
   None -> false
-  |Some x -> if (nomparent = x) then true else haveThisParent x nomparent
+  |Some x -> 
+  if (nomparent = x) then true else haveThisParent x nomparent
 ;;
 
 (*converti un string en choixBloc *)
@@ -207,12 +208,12 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
 
   
   let (ou : choixBloc)= string_to_choixbloc lieu in
-  if (ou = Main) then print_string lieu;
   
+  (*
   print_string (lieu^" : \n");
   print_int (Hashtbl.length variables);
   print_string "\n";
-  
+  *)
 
   match e with
   Id (i : string) -> (*si l'expression est un id*)
@@ -293,8 +294,8 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
   | Cast (s,e) -> (*si l'expression est un (a as C)*)
     begin
       let typee = expr_to_typestring e variables lieu in
-      if ( (not (haveThisParent typee s)) || (typee<>s)) then failwith ("error expression"^typee^" cannot be cast in "^s^" at :"^lieu)
-      else typee
+      if ( (not (haveThisParent typee s)) && (typee<>s)) then failwith ("error expression "^typee^" cannot be cast in "^s^" at :"^lieu)
+      else s
     end
   | Selec (e,s) -> (*si l'expression est un a.b*)
   begin
@@ -328,7 +329,7 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
           | None -> ""
           | Some x -> x
         end
-        else failwith ("the function : "^s^" doesn't exist in "^classe.data.nom)
+        else failwith ("the function : "^s^" doesn't exist (or match argument) in "^classe.data.nom)
     | Objet ->
         let objet = (Hashtbl.find !table.objet sexpr) in
         if (Hashtbl.mem objet.meth params) then
@@ -338,7 +339,7 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
           | None -> ""
           | Some x -> x
         end
-        else failwith ("the attribute : "^s^" doesn't exist in "^objet.data.nom)
+        else failwith ("the attribute : "^s^" doesn't exist (or match argument) in "^objet.data.nom)
     | Main -> failwith ("cannot call a function from main (how did this happen ?)")
   end
   | Inst (s,el) ->  (*si l'expression est un new C()*)
@@ -436,6 +437,22 @@ let checkAssignDeclaration (dec : Ast.decl) variables nomCO =
   if (nomTypeDroite <> dec.typ) then failwith ("erreur mauvais type d'init de variable : "^dec.lhs^" dans : "^nomCO)
 ;;
 
+(*Verifie si tb herite de ta *)
+(*ou si meme valeur *)
+let rec doesHerite ta tb=
+  if (ta = tb) then true
+  else begin
+    if ((Hashtbl.mem !table.classe ta) && (Hashtbl.mem !table.classe tb)) then
+    begin
+      let hashC = Hashtbl.find !table.classe tb in
+      match hashC.data.ext with
+      | None -> false
+      | Some x -> doesHerite ta x
+    end
+    else false
+  end
+;;
+
 (*fonction qui check le bloc de soit une methode de soit le main *)
 (*info method  : nomClasse*methParam*)
 (*quelbloc : soit Main, soit Classe, soit Objet *)
@@ -448,127 +465,150 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
   let (currentClass : classHash) = Hashtbl.find !table.classe (fst infomethod) in
   let (currentMethod : Ast.funDecl) = Hashtbl.find currentClass.meth (snd infomethod) in
   *)
+  (*
+  print_string (fst (snd infomethod));
+  print_string "\n";
+  *)
 
   let variablesLocales = Hashtbl.create 50 in
   ajouterDeclarations (fst bloc) variablesLocales;(*on ajoute les declarations locales du bloc *)
   
-  let instructions = snd bloc in
-      (* Etapes pour prendre en compte la portee : *)
-      (* -  On check d'abord si declaration dans variables locales, sinon dans variables et sinon erreur *)
-      (*Techniquement il modifiera seulement si dans variables (mais on modifie pas en vc) *)
-  
-  let rec checkInstructions ins =
-    match ins with
-      Expr e -> 
-        begin
-          match quelbloc with
-            | Classe -> let _ = expr_to_typestring e variables (fst infomethod) in ()
-            | Objet -> let _ =  expr_to_typestring e variables (fst infomethod) in ()
-            | Main -> let _ = expr_to_typestring e variables (fst infomethod) in ()
-                
-        end;
-        ();
-        (*
-        if Hashtbl.mem variablesLocales e then true
-          else if Hashtbl.mem variables e then true 
-            else failwith "not a good instruction"
-        *)
-    | Bloc b -> 
-      begin
+  let sousVariables = Hashtbl.copy variables in
+  Hashtbl.iter (fun a b -> Hashtbl.add sousVariables a b) variablesLocales;
 
-        (*on ajoute les variables locales a une copie des variables du bloc du dessus *)
-        let sousVariables = Hashtbl.copy variables in
-        Hashtbl.iter (fun a b -> Hashtbl.add sousVariables a b) variablesLocales;
-        
-        checkBloc b infomethod variablesLocales quelbloc;
-      end
-    | Return oe -> 
-        begin
-        match quelbloc with 
-        | Classe -> 
-          begin
-           match oe with 
-           | None -> ();
-           (*
-           let typRetourFunc = fst (fst (snd infomethod)) in
-           if (typRetourFunc <> "") then failwith "error returning nothing in a function that return something";
-            *)
-           | Some oe -> 
+  let instructions = snd bloc in
+  
+  (* Etapes pour prendre en compte la portee : *)
+  (* -  On check d'abord si declaration dans variables locales, sinon dans variables et sinon erreur *)
+  (*Techniquement il modifiera seulement si dans variables (mais on modifie pas en vc) *)
+  
+  List.iter (fun x -> checkInstructions x infomethod sousVariables quelbloc) instructions
+
+and checkInstructions ins (infomethod : string*methParam) (variables : ((string, Ast.decl) Hashtbl.t)) (quelbloc : choixBloc) =
+match ins with
+  Expr e -> 
+    begin
+      match quelbloc with
+        | Classe -> let _ = expr_to_typestring e variables (fst infomethod) in ()
+        | Objet -> let _ =  expr_to_typestring e variables (fst infomethod) in ()
+        | Main -> let _ = expr_to_typestring e variables (fst infomethod) in ()
+            
+    end;
+    ();
+    (*
+    if Hashtbl.mem variablesLocales e then true
+      else if Hashtbl.mem variables e then true 
+        else failwith "not a good instruction"
+    *)
+| Bloc b -> 
+  begin
+    checkBloc b infomethod variables quelbloc;
+  end
+| Return oe -> 
+    begin
+    match quelbloc with 
+    | Classe -> 
+      begin
+       match oe with 
+       | None -> ();
+       (*
+       let typRetourFunc = fst (fst (snd infomethod)) in
+       if (typRetourFunc <> "") then failwith "error returning nothing in a function that return something";
+        *)
+       | Some oe -> 
+          let hashC = Hashtbl.find !table.classe (fst infomethod) in
+          let currFun = Hashtbl.find hashC.meth (snd infomethod) in
+          let typRetourFunc = 
+            match currFun.typ with 
+            | None->""
+            | Some x -> x
+          in
+          let typRetourExpr = expr_to_typestring oe variables (fst infomethod) in
+          if (typRetourExpr <> typRetourFunc) then failwith ("error unmatch of return :"^typRetourExpr^"<>"^typRetourFunc)
+          else ();
+      end;
+    | Objet -> begin
+       match oe with 
+       | None -> () 
+       | Some oe -> 
+              let hashO = Hashtbl.find !table.objet (fst infomethod) in
+              let currFun = Hashtbl.find hashO.meth (snd infomethod) in
+              let typRetourFunc = 
+                match currFun.typ with 
+                | None->""
+                | Some x -> x
+              in
               let typRetourExpr = expr_to_typestring oe variables (fst infomethod) in
-              let typRetourFunc = (fst (snd infomethod)) in
               if (typRetourExpr <> typRetourFunc) then failwith "error type of return <> than type of func return"
               else ();
-          end;
-        | Objet -> begin
-           match oe with 
-           | None -> () 
-           | Some oe -> 
-                  let typRetourExpr = expr_to_typestring oe variables (fst infomethod) in
-                  let typRetourFunc = (fst (snd infomethod)) in
-                  if (typRetourExpr <> typRetourFunc) then failwith "error type of return <> than type of func return"
-                  else ();
-          end;
-        | Main -> failwith "couldn't call return in a Main bloc";
-        
-      end
+      end;
+    | Main -> failwith "couldn't call return in a Main bloc";
+    
+  end
 
-    | Ite (e,it,ie) -> 
-    checkInstructions it;checkInstructions ie;
-      begin
-        match quelbloc with
-          | Classe -> 
-              if expr_to_typestring e variables (fst infomethod) = "Integer" then ()
-              else failwith "type integer is required in ITE" 
-            
-          | Objet -> 
-              if expr_to_typestring e variables (fst infomethod) = "Integer" then ()
-              else failwith "type integer is required in ITE" 
-              
-          | Main -> 
-               if expr_to_typestring e variables (fst infomethod) = "Integer" then ()
-              else failwith "type integer is required in ITE" 
-              
-      end
-        
-        
-        (*| _ -> "you have to put an integer on the condition"*)
-    | Assign (el,er) -> 
-      begin
-        (*verifier que el n'est pas une cste *)
-        match el with
-        |Cste(el) -> failwith "trying to assign a const"
-        |CsteStr(el) -> failwith "trying to assign a const"
-        |_ -> 
-          match quelbloc with
-          | Classe -> 
-              if expr_to_typestring el variables (fst infomethod) = expr_to_typestring er variables (fst infomethod) then ()
-                else failwith "trying to assigne 2 different types" ; 
-              if Hashtbl.mem !table.objet (expr_to_typestring el variables (fst infomethod)) then failwith "trying to assigne an object"
-                else ()
-          | Objet -> 
-              
-              if expr_to_typestring el variables (fst infomethod) = expr_to_typestring er variables (fst infomethod) then ()
-                else failwith "trying to assigne 2 different types" ;
-              if Hashtbl.mem !table.objet (expr_to_typestring el variables (fst infomethod)) then failwith "trying to assigne an object"
-                else ()
-              
-          | Main -> 
-              
-              if expr_to_typestring el variables (fst infomethod) = expr_to_typestring er variables (fst infomethod) then ()
-                else failwith "trying to assigne 2 different types" ;
-              if Hashtbl.mem !table.objet (expr_to_typestring el variables (fst infomethod)) then failwith "trying to assigne an object"
-                else ()
-              
-      
-      (*verifier que expr_to_typestring de gauche est meme que celui de droite *)
-      end
-  in List.iter (fun x -> checkInstructions x) instructions
-;;
+| Ite (e,it,ie) -> 
+                checkInstructions it infomethod variables quelbloc;checkInstructions ie infomethod variables quelbloc;
+                if (expr_to_typestring e variables (fst infomethod)) = "Integer" 
+                then ()
+                else failwith "type integer is required in ITE" 
+    
+| Assign (el,er) -> 
+  begin
+    (*verifier que el n'est pas une cste *)
+    match el with
+    |Cste(el) -> failwith "trying to assign a const"
+    |CsteStr(el) -> failwith "trying to assign a const"
+    |_ -> 
+          (*
+          Print.print_expType el;
+          print_string "=";
+          Print.print_expType er;
+          print_string "\n";
+          *)
+
+          let leftType = expr_to_typestring el variables (fst infomethod) in
+          let rightType =  expr_to_typestring er variables (fst infomethod) in
+          if (doesHerite leftType rightType) then ()
+            else failwith ("trying to assigne 2 different types :"^leftType^"<>"^rightType); 
+          if Hashtbl.mem !table.objet (expr_to_typestring el variables (fst infomethod)) then failwith "trying to assigne an object"
+            else ()
+  (*verifier que expr_to_typestring de gauche est meme que celui de droite *)
+  end
+
+
+  (*utilisee que pour les methodes *)
+  let remplirVariablesEtCallCheckBloc variables (methpar : methParam) (fdec : Ast.funDecl) attr nom (typ : choixBloc) =
+
+    let ajouterresult varcparam typResult= 
+      let resultDecl=
+        {
+        lhs = "result";
+        typ= typResult; 
+        isVar = false;(* a revoir *)
+        rhs = None;
+        } in 
+      Hashtbl.add varcparam "result" resultDecl; (*on ajoute super aux variables *)
+    in
+
+    (*on verifie l'en tete de la fonction et on rempli*)
+    List.iter (fun dec -> 
+    begin
+      if (dec.isVar && not (Hashtbl.mem attr dec.lhs)) 
+      then failwith ("a parameter with var is not an attribute in : "^ (fst methpar)^ " at "^ nom)
+      else Hashtbl.add variables dec.lhs dec
+    end
+    ) fdec.para;
+
+    match fdec.typ with
+    |None -> checkBloc fdec.corp (nom,methpar) variables typ
+    |Some x -> ajouterresult variables x; checkBloc fdec.corp (nom,methpar) variables typ
+
 
 (*On teste toutes les methodes d'une classe *)
 (*c : classeHash ou objetHash *)
 (*typ : Classe ou Objet *)
 let checkAllMethodAndAttributs (nom : string) (attr) (funs) (super: string) (typ : choixBloc)=
+
 
   (*fonction qui ajoute this*)
   let ajouterthis varcparam=
@@ -593,23 +633,6 @@ let checkAllMethodAndAttributs (nom : string) (attr) (funs) (super: string) (typ
       Hashtbl.add varcparam "super" superdecl; (*on ajoute super aux variables *)
   in
 
-  (*utilisee que pour les methodes *)
-  let remplirVariablesEtCallCheckBloc variables (methpar : methParam) (fdec : Ast.funDecl) =
-
-    (*on verifie l'en tete de la fonction et on rempli*)
-    List.iter (fun dec -> 
-    begin
-      if (dec.isVar && not (Hashtbl.mem attr dec.lhs)) 
-      then failwith ("a parameter with var is not an attribute in : "^ (fst methpar)^ " at "^ nom)
-      else Hashtbl.add variables dec.lhs dec
-    end
-    ) fdec.para;
-    (*on verifie le bloc de la fonction *)
-    print_string ((fst methpar)^"\n");
-
-    checkBloc fdec.corp (nom,methpar) variables typ
-  in 
-
   let variables2 = Hashtbl.copy attr in
   (*on ajoute super et this aux varibles *)
 
@@ -618,9 +641,14 @@ let checkAllMethodAndAttributs (nom : string) (attr) (funs) (super: string) (typ
 
   Hashtbl.iter (fun s dec -> checkAssignDeclaration dec variables2 nom) attr; (*on check les init des variables *)
   
+  (*
   print_string nom;
+  *)
 
-  Hashtbl.iter (fun methpara fdec -> remplirVariablesEtCallCheckBloc variables2 methpara fdec) funs (*on check le bloc des fonctions *)
+  Hashtbl.iter (fun methpara fdec -> 
+            let variablesBloc = Hashtbl.copy variables2 in
+            remplirVariablesEtCallCheckBloc variablesBloc methpara fdec attr nom typ
+    ) funs (*on check le bloc des fonctions *)
 ;;
 
 let check_Main (b: Ast.blocType) =
