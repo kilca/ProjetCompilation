@@ -8,7 +8,11 @@ def Point
  this.index := 1;
 }
 
-def fonction1() : Integer := this.index
+def fonction1() : Integer is{
+	a : Integer := index;
+	is 
+	return 1;
+}
 
 }
 
