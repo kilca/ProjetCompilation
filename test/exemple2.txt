@@ -28,7 +28,7 @@ def PointColore(x: Integer, y: Integer, n: String, var col: Color) : Point(x, y,
 {
 	true : Integer :=1;
 	ts : String :="1";
-	p1 : Point := new Point(1,"a", "p1");
+	p1 : Point := new Point(1,1, "p1");
 	is 
 	
 	ts.println();
