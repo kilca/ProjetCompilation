@@ -1,12 +1,20 @@
-class A() is {
-  def A() is {}
-}
-class A() is {
-  def A() is {}
-}
+class Point(var xc: Integer, var yc: Integer, var name: String) is 
+{ 
+var index: Integer;
+def Point
+(var xc : Integer, var yc: Integer, var name: String) is 
 {
-  true: Integer := 1;
-  false: Integer := 0;
-  is
-  Test.test();
+
+ test := name;
 }
+
+def fonction1() : Integer := this.index
+
+}
+
+
+{
+	
+}
+
+
