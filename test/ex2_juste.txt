@@ -1,0 +1,43 @@
+class Test(var x: Integer, var y: String, var z: String) is
+{
+
+	var inst: String;
+	def Test(var x: Integer, var y: String, var z: String) is
+	{ 
+		inst := y; } /* constructeur */
+
+	}
+
+}
+
+class TestSpe extends Test(x : Integer, y : String, z : String)
+{
+	t_x : Integer;
+	t_y : String;
+	t_z : String;
+	def Testspe(x : Integer, y : String, z : String)
+	{
+		t_x := x;
+		t_y := y;
+		t_z := z;
+	}
+
+	def fonction1 (t : Integer, v : String)
+	{
+		return;
+	}
+
+	def fonction2 (t : Integer, v : String) : Integer is
+	{
+		t_x := 3
+		return t;
+	}
+
+	def fonction3 (t : Integer, v : String) : String
+	{
+		this.t_y := "oui"
+		return t_y;
+	}
+}
+
+
