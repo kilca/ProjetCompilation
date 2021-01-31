@@ -2,7 +2,7 @@ class Point(var x: Integer, var y: Integer, var name: String) is {
 var index: Integer;
 def Point (var x : Integer, var y: Integer, var name: String) is 
 {
- this.index := CptPoint.incr();
+ this.index := 2;
 }
 
   def print(verbose : Integer) is {
@@ -14,8 +14,8 @@ def Point (var x : Integer, var y: Integer, var name: String) is
 
 }
 {
-    true: Integer :="a";
-    p1: Point := new Point(1, 5, "p1");
+    true: Integer := 1;
+    p1: Point := new Point(1, "4", "p1");
     is
     "Debut du programme".println();
     p1.print(0);

@@ -231,7 +231,7 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
                     else if (not (Hashtbl.mem variables i)) then failwith ("la variable "^i^ " n'existe pas dans le bloc de : ("^lieu^"?)")
                     else (Hashtbl.find variables i).typ
   | ClassID (ci : string) -> (*si l'expression est un objet*)
-                    if (not (Hashtbl.mem !table.objet ci)) then failwith ("l'objet appele n'existe pas")  
+                    if (not (Hashtbl.mem !table.objet ci)) then failwith ("l'objet appele : "^ci^", n'existe pas")  
                     else ci
   | Cste (c : constInt) -> "Integer" (*si l'expression est un int*)
   | CsteStr (c : constString) -> "String" (*si l'expression est un string*)
@@ -363,67 +363,6 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
                 end
 ;;
 
-(*verifie que les parametre du constructeur appele est le bon *)
-let checkParamSuperConstructeur (super : superO) (variables : ((string, Ast.decl) Hashtbl.t)) (nomClasse : string) =
-  let param = super.para in
-  let nom = super.ex in
-  (*la verification du fait que le nom existe a deja ete fait implicitement 
-  vu qu'il a verifie que le extend est bon et que super = extend
-  *)
-
-  let (constructorparent : consDecl) = (Hashtbl.find !table.classe nom).cons in
-  if ((List.length constructorparent.para) <> (List.length param)) 
-  then failwith ("error the number of arg of superconstructor called : "^nomClasse ^" doesn't match his class")
-  else
-  begin (*techniquement meme verification que serait dans checkbloc *)
-    List.iter2 (fun (a : decl) (b : expType) -> 
-    if (a.typ <> (expr_to_typestring b variables nomClasse)) then failwith ("error the type of argument of supercons doesnt match : "^nomClasse)
-    ) constructorparent.para param
-  end
-;;
-
-(*ou alors deja fait dans en tete classe ? *)
-(*check si le constructeur de la classe a bien tout les memes parametres que la classe*)
-let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
-  if ((List.length classeAttr.para) <> (List.length constr.para)) 
-  then failwith ("error the number of arg of constructor of "^classeAttr.nom ^" doesn't match his class")
-  else
-  begin
-    List.iter2 (fun (a : decl) (b : decl) -> if ((a.typ <> b.typ) || (a.isVar <> b.isVar) || (a.lhs <> b.lhs))
-    then failwith ("error the type of param of constructor of "^classeAttr.nom ^" doesn't match his class")
-    ) classeAttr.para constr.para
-  end
-  ;
-  if (constr.nom <> classeAttr.nom) then failwith "error the constructor must have the same name as the class (it shouldnt happen here)";
-  
-  (*on compare l'extend de la classe et le super du constructeur *)
-  match (constr.superrr,classeAttr.ext) with
-      None,None -> () (*si le constructeur n'a pas de parent et class n'a pas de parent *)
-      |Some x, None -> failwith ("there must be an extend in the class if there is in the constructor in "^classeAttr.nom)
-      |None, Some x -> failwith ("there must be an extend in the constructor if there is in the class in "^classeAttr.nom)
-      |Some a, Some b ->(*si le constructeur a un parent et class a un parent *)
-                      let (nomSuper : string) = a.ex in
-                      let (nomExtend : string) = b in
-                      if (nomSuper <> nomExtend) then failwith ("super of constructor is different than the extend of the class : "^classeAttr.nom)
-                      else 
-                      begin
-                      let variables = (Hashtbl.find !table.classe constr.nom).attr in
-                      List.iter (fun (x : Ast.decl) -> if (not x.isVar) then Hashtbl.add variables x.lhs x) constr.para;
-
-                      checkParamSuperConstructeur a variables constr.nom
-                      end
-;;
-
-(*ajouter la liste de declaration dans la hashtable variables (utilise dans checkBloc)*)
-(*TODO CHECK INIT *)
-let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.decl) Hashtbl.t)) =
-  List.iter (fun x -> 
-  if (x.lhs = "this") then failwith "error, can't create a variable with name this"
-  else if (x.lhs = "super") then failwith "error, can't create a variable with name super"
-  else
-    Hashtbl.add variables x.lhs x
-  ) declarations
-;;
 
 let checkAssignDeclaration (dec : Ast.decl) variables nomCO =
   match dec.rhs with
@@ -431,6 +370,17 @@ let checkAssignDeclaration (dec : Ast.decl) variables nomCO =
   | Some x -> 
             let nomTypeDroite = expr_to_typestring x variables nomCO in
             if (nomTypeDroite <> dec.typ) then failwith ("erreur mauvais type d'init de variable : "^dec.lhs^" dans : "^nomCO)
+;;
+
+(*ajouter la liste de declaration dans la hashtable variables (utilise dans checkBloc)*)
+let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.decl) Hashtbl.t)) nomCO =
+  List.iter (fun x -> 
+  if (x.lhs = "this") then failwith "error, can't create a variable with name this"
+  else if (x.lhs = "super") then failwith "error, can't create a variable with name super"
+  else
+      checkAssignDeclaration x variables nomCO;
+      Hashtbl.add variables x.lhs x
+  ) declarations
 ;;
 
 (*Verifie si tb herite de ta *)
@@ -457,13 +407,13 @@ let rec checkBloc (bloc: Ast.blocType) (infomethod : string*methParam) (variable
 
 
   let variablesLocales = Hashtbl.create 50 in
-  ajouterDeclarations (fst bloc) variablesLocales;(*on ajoute les declarations locales du bloc *)
+  ajouterDeclarations (fst bloc) variablesLocales (fst infomethod);(*on ajoute les declarations locales du bloc *)
   
   let sousVariables = Hashtbl.copy variables in
   Hashtbl.iter (fun a b -> Hashtbl.add sousVariables a b) variablesLocales;
 
   let instructions = snd bloc in
-  
+
   List.iter (fun x -> checkInstructions x infomethod sousVariables quelbloc) instructions
 
 and checkInstructions ins (infomethod : string*methParam) (variables : ((string, Ast.decl) Hashtbl.t)) (quelbloc : choixBloc) =
@@ -612,6 +562,109 @@ let checkAllMethodAndAttributs (nom : string) (attr) (funs) (super: string) (typ
             remplirVariablesEtCallCheckBloc variablesBloc methpara fdec attr nom typ
     ) funs (*on check le bloc des fonctions *)
 ;;
+
+
+(*verifie que les parametre du constructeur appele est le bon *)
+let checkParamSuperConstructeur (super : superO) (variables : ((string, Ast.decl) Hashtbl.t)) (nomClasse : string) =
+  let param = super.para in
+  let nom = super.ex in
+  (*la verification du fait que le nom existe a deja ete fait implicitement 
+  vu qu'il a verifie que le extend est bon et que super = extend
+  *)
+
+  let (constructorparent : consDecl) = (Hashtbl.find !table.classe nom).cons in
+  if ((List.length constructorparent.para) <> (List.length param)) 
+  then failwith ("error the number of arg of superconstructor called : "^nomClasse ^" doesn't match his class")
+  else
+  begin (*techniquement meme verification que serait dans checkbloc *)
+    List.iter2 (fun (a : decl) (b : expType) -> 
+    if (a.typ <> (expr_to_typestring b variables nomClasse)) then failwith ("error the type of argument of supercons doesnt match : "^nomClasse)
+    ) constructorparent.para param
+  end
+;;
+
+(*ou alors deja fait dans en tete classe ? *)
+(*check si le constructeur de la classe a bien tout les memes parametres que la classe*)
+let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
+  if ((List.length classeAttr.para) <> (List.length constr.para)) 
+  then failwith ("error the number of arg of constructor of "^classeAttr.nom ^" doesn't match his class")
+  else
+  begin
+    List.iter2 (fun (a : decl) (b : decl) -> if ((a.typ <> b.typ) || (a.isVar <> b.isVar) || (a.lhs <> b.lhs))
+    then failwith ("error the type of param of constructor of "^classeAttr.nom ^" doesn't match his class")
+    ) classeAttr.para constr.para
+  end
+  ;
+  if (constr.nom <> classeAttr.nom) then failwith "error the constructor must have the same name as the class (it shouldnt happen here)";
+  
+  let (blo : blocType) = constr.bloc in
+  let nom = classeAttr.nom in
+  let (param : string list) = List.map (fun (x : decl) -> x.typ) constr.para in
+
+  (* On rempli la liste des variables : *)
+
+
+  (*fonction qui ajoute this*)
+  let ajouterthis varcparam=
+    let thisdecl =
+      {
+      lhs = "this";
+      typ= nom; 
+      isVar = false;(* a revoir *)
+      rhs = None;
+      } in 
+      Hashtbl.add varcparam "this" thisdecl; (*on ajoute this aux variables *)
+    in
+  (*fonction qui ajoute super *)
+  let ajoutersuper varcparam super= 
+      let superdecl =
+        {
+        lhs = "super";
+        typ= super; 
+        isVar = false;(* a revoir *)
+        rhs = None;
+        } in 
+      Hashtbl.add varcparam "super" superdecl; (*on ajoute super aux variables *)
+  in
+
+  let vari2 = Hashtbl.create 50 in
+
+  ajouterthis vari2;
+  match classeAttr.ext with
+  | None -> ();
+  | Some x -> ajoutersuper vari2 x;
+  ;
+
+  List.iter (fun (d : decl) ->
+        Hashtbl.add vari2 d.lhs d
+  ) constr.para;
+  (*
+  Hashtbl.iter (fun s dec -> checkAssignDeclaration dec variables2 nom) attr;
+
+  Hashtbl.iter (fun methpara fdec -> 
+            let variablesBloc = Hashtbl.copy variables2 in
+            remplirVariablesEtCallCheckBloc variablesBloc methpara fdec attr nom typ
+    ) funs (*on check le bloc des fonctions *)
+  *)
+  (*on compare l'extend de la classe et le super du constructeur *)
+  match (constr.superrr,classeAttr.ext) with
+      None,None -> (*si le constructeur n'a pas de parent et class n'a pas de parent *)
+                      checkBloc blo (nom,(nom,param)) vari2 Classe
+      |Some x, None -> failwith ("there must be an extend in the class if there is in the constructor in "^classeAttr.nom)
+      |None, Some x -> failwith ("there must be an extend in the constructor if there is in the class in "^classeAttr.nom)
+      |Some a, Some b ->(*si le constructeur a un parent et class a un parent *)
+                      let (nomSuper : string) = a.ex in
+                      let (nomExtend : string) = b in
+                      if (nomSuper <> nomExtend) then failwith ("super of constructor is different than the extend of the class : "^classeAttr.nom)
+                      else 
+                      begin
+                      let variables = (Hashtbl.find !table.classe constr.nom).attr in
+                      List.iter (fun (x : Ast.decl) -> if (not x.isVar) then Hashtbl.add variables x.lhs x) constr.para;
+                      checkParamSuperConstructeur a variables constr.nom;
+                      checkBloc blo (nom,(nom,param)) vari2 Classe
+                      end
+;;
+
 
 let check_Main (b: Ast.blocType) =
 
