@@ -124,7 +124,7 @@ and expr_to_string exp  (env : envT) (currentClass : string)=
   | Inst (s,el)-> s
 
 and storeDecl expr env chan=
-	match expr with
+    match expr with
     Id  i ->
       if (Hashtbl.mem env i) then
         begin
@@ -211,7 +211,7 @@ let find_eti_methode nom nomMethode parametres  (env : envT) =
 let rec compileFunObjectDecl (objectName:string) (f : Ast.funDecl) (env : envT) chan =
   output_string chan "\t\t-- compileFunDecl\n";
   let eti = makeEtiMethod f.nom in
-
+  output_string chan ("JUMP EndFun_" ^ eti ^ "\n");
   output_string chan (eti^": NOP--- "^(f.nom)^"\n");
 
   let hashO = Hashtbl.find !table.objet objectName in
@@ -259,6 +259,7 @@ let rec compileFunObjectDecl (objectName:string) (f : Ast.funDecl) (env : envT) 
             *)
             ();
   ;
+  output_string chan ("EndFun_" ^ eti ^ ": NOP\n");
   env;
 
 
@@ -272,9 +273,7 @@ let rec compileFunObjectDecl (objectName:string) (f : Ast.funDecl) (env : envT) 
     if (not (Hashtbl.mem hashC.methEti mparam)) then failwith "error with get etiquette, do not exist";
 
     let eti = Hashtbl.find hashC.methEti mparam in
-
-    output_string chan (eti^": NOP--- "^(f.nom)^"\n");
-
+    output_string chan (eti ^ ": NOP--- " ^ (f.nom) ^ "\n");
   
     let nbArgs = List.length f.para in
     let idRetour =  ((-nbArgs)-2) in
@@ -284,8 +283,8 @@ let rec compileFunObjectDecl (objectName:string) (f : Ast.funDecl) (env : envT) 
   
     (*si la fonction retourne qqc on declare result*)
     match f.typ with
-    |None->();
-    |Some x-> Hashtbl.add variables "result" (idRetour,x);
+      None -> ();
+    | Some x -> Hashtbl.add variables "result" (idRetour, x);
     ;
   
     (*equivalent d'un for *)
@@ -296,15 +295,14 @@ let rec compileFunObjectDecl (objectName:string) (f : Ast.funDecl) (env : envT) 
                 Hashtbl.add variables x.lhs (i,x.typ);
                 aux s (i+1);
                 end
-    in aux (f.para) (-nbArgs-1);
+    in aux (f.para) (-nbArgs - 1);
   
-    cptIdDecl:= 0;
+    cptIdDecl := 0;
     let _ = compileBloc (f.corp) variables chan in
     let _ = compileReturn variables chan in
     match f.typ with
-    | None -> (); (*Todo : ??? *)
-    | Some x ->
-              ();
+      None -> (); (*Todo : ??? *)
+    | Some x -> ();
     ;
     env;
 
@@ -427,7 +425,7 @@ and compileAttrib objectName decl (env : envT) chan =
 and compileClassMember classeName cm (env : envT) chan =
   output_string chan "\t-- compileClassMember\n";
   match cm with
-    Fun f -> compileFunClasseDecl classeName f env chan
+    Fun f -> compileFunClasseDecl classeName f env chan;
   | Con c -> compileConsDecl c env chan
   | Att d -> env (*compileAttrib classeName d (compileDecl d env chan) chan*)
 
@@ -638,7 +636,7 @@ and compileExpr exp (env : envT) chan  =
                                 env
                                 end
                     end
-  | Inst (s, el) -> 	 
+  | Inst (s, el) ->
                       let hashC = Hashtbl.find !table.classe s in
                       let nb = Hashtbl.length hashC.attrIndex in
                       (*
