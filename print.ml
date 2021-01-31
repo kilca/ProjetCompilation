@@ -5,6 +5,11 @@ open Ast
     * demandées sont bien respectées.
     *)
 
+(*pour debug (et c'est hallucinant que ocaml l'ai pas) *)
+let print_bool b=
+   Printf.printf "%B" b
+;;
+
 let print_opComp (p : Ast.opComp) =
    match p with
     Eq -> print_string "=="
