@@ -5,11 +5,10 @@ var index: Integer;
 def Point
 (var xc : Integer, var yc: Integer, var name: String) is 
 {
- this.index := CptPoint.incr();
- test := name;
+ this.index := 1;
 }
 
-def fonction1() : Integer := this.next
+def fonction1() : Integer := this.index
 
 }
 
