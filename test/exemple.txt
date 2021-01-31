@@ -9,7 +9,7 @@ def Point
  test := name;
 }
 
-def fonction1() : Integer := this.index
+def fonction1() : Integer := this.next
 
 }
 
