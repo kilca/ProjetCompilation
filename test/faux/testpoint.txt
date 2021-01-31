@@ -1,0 +1,23 @@
+class Point(var x: Integer, var y: Integer, var name: String) is { 
+var index: Integer;
+def Point (var x : Integer, var y: Integer, var name: String) is 
+{
+ this.index := CptPoint.incr();
+}
+
+  def print(verbose : Integer) is {
+      if verbose then "Inside Point::print".println(); else { }
+      /* Exemples avec l'operateur & de concatenation de chaines */
+      this.name.print();
+      ( "= (" & this.x.toString() & ", " & this.y.toString() & ")" ).println();
+  }
+
+}
+{
+    true: Integer :="a";
+    p1: Point := new Point(1, 5, "p1");
+    is
+    "Debut du programme".println();
+    p1.print(0);
+}
+
