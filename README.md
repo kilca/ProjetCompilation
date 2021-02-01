@@ -14,7 +14,7 @@
 
 - cd interpreter/
 
-- ../out.cfvs
+- ./interp ../out.cfvs
 
 # Fait
 
