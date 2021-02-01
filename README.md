@@ -2,13 +2,19 @@
 
 # Comment tester
 
-make
+- make
 
-./tp test/exObject.fvs
+- cd interpreter/
 
-cd interpreter/
+- make
 
-../out.cfvs
+- cd ..
+
+- ./tp test/exObject.fvs
+
+- cd interpreter/
+
+- ../out.cfvs
 
 # Fait
 
