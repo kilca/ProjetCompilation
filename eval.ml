@@ -576,10 +576,12 @@ let checkAllMethodAndAttributs (nom : string) (attr) (funs) (super: string) (typ
       Hashtbl.add varcparam "super" superdecl; (*on ajoute super aux variables *)
   in
 
-  let variables2 = Hashtbl.copy attr in
+  (*let variables2 = Hashtbl.copy attr in*)
+  let variables2 = Hashtbl.create 50 in
   (*on ajoute super et this aux varibles *)
 
   ajouterthis variables2;
+
   if (super <> "") then ajoutersuper variables2;
 
   Hashtbl.iter (fun s dec -> checkAssignDeclaration dec variables2 nom) attr; (*on check les init des variables *)
