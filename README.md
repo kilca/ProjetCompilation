@@ -6,9 +6,9 @@ make
 
 ./tp test/exObject.fvs
 
-cd interpreter/
+cd interpreter/ (penser a refaire make clean et make)
 
-../out.cfvs
+./interp ../out.cfvs
 
 # Fait
 
