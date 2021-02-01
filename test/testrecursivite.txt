@@ -1,0 +1,19 @@
+object O is{
+def fib(n : Integer) : Integer is
+{
+    if (n <= 1) then
+        return n;
+    else return this.fib(n-1) + this.fib(n-2);
+}
+
+def fact( x : Integer) : Integer is{
+    if (x <= 1) then
+      return 1;
+    else
+      return x * this.fact(x - 1);
+}
+}
+{
+O.fib(10).toString().println();
+O.fact(10).toString().println();
+}

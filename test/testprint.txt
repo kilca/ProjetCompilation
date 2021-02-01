@@ -1,0 +1,6 @@
+{
+	st : String :="hello";
+	is
+	st.println();
+	st.print();
+}
