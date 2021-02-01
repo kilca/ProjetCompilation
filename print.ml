@@ -20,19 +20,16 @@ let print_opComp (p : Ast.opComp) =
    | Ge -> print_string ">="
 ;;  
   
-let print_constInt (p : Ast.constInt)=
+let print_constInt (p : int)=
  print_string "CONSTINT[";
- match p with
- Int i ->  print_int i;print_string "]"
+   print_int p;print_string "]"
  (*| String s -> print_string s;print_string "]"*)
 ;;
   
 
-let print_constString (p : Ast.constString)=
+let print_constString (p : string)=
  print_string "CONSTSTRING[";
- match p with
- (*Int i -> print_int i;print_string "]"*)
-  String s ->  print_string s;print_string "]"
+   print_string p;print_string "]"
 ;;
 
 

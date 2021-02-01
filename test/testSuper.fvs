@@ -1,0 +1,40 @@
+class P (var v : Integer)is
+{
+  def P(var v : Integer) is {
+
+
+  }
+  
+  def afficherV() is{
+    this.v.toString().println();
+  }
+
+  def presenter() is {
+    "JE SUIS P".println();
+  }
+
+}
+
+class A (v : Integer) extends P is {
+
+  def A(v :Integer) : P(v+1) is {
+
+  }
+  
+  def override presenter() is {
+    super.presenter();
+  }
+
+}
+{
+  a: A := new A(2);
+  p: P := new P(9);
+  is
+  "on appelle sur A".println();
+  a.presenter();
+  a.afficherV();
+  "on appelle sur P".println();
+  p.presenter();
+  p.afficherV();
+  "fin".println();
+}

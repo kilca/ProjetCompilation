@@ -4,9 +4,8 @@ open Ast
 %}
 %token <string> ID
 %token <string> CLASSID
-%token <Ast.constInt> CSTEINT
-%token <Ast.constString> CSTESTRING
-
+%token <int> CSTEINT
+%token <string> CSTESTRING
 
 %token <Ast.opComp> RELOP
 %token PLUS MINUS TIMES DIV
@@ -107,6 +106,7 @@ expr:
   | LPAREN AS x=CLASSID COLON e=expr RPAREN { Cast (x, e) }
   (*| s=selexpr {s}*)
   | e= expr DOT i=ID {Selec(e,i)}
+  | e= CLASSID DOT i=ID {Selec(ClassID (e),i)}
   | e = delimited (LPAREN, expr, RPAREN) { e }
   | x=expr DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN) { Call (x,i,param) }
   | x=CLASSID DOT i=ID param=delimited(LPAREN,separated_list(COMMA,expr),RPAREN)   { Call (ClassID (x),i,param) } (* ou plutot Cste->ID ? *)

@@ -1,0 +1,9 @@
+class A() is {
+  var a : Integer := "ocamoule";
+  def A() is {}
+}
+{
+	
+}
+
+

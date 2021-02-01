@@ -1,3 +1,10 @@
+/*compile pas car mauvais extend 
+appel de print sans argument
+appel de name sans argument
+manque de this
+etc ...
+*/
+
 object CptPoint is {          /* Compteur d'instances de Point */
   var next : Integer := 0;   /* indice de la prochaine instance de Point */
   def incr() : Integer is { this.next := this.next + 1; result := this.next; }
@@ -167,7 +174,7 @@ class PointNoir(xc: Integer, yc:Integer) extends PointColore is {
 class DefaultPoint() extends PointColore is {
    def override estGris() : Integer := 0
    def override couleur() : Couleur := CouleurFactory.blanc()
-   def DefaultPoint()
+   def PointBlanc(xc: Integer, yc:Integer)
       : PointColore(0, 0, CouleurFactory.blanc()) is { /* empty */ }
 }
 

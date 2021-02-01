@@ -5,13 +5,6 @@ open Primitives
 *)
 
 
-(*
-string1 : nom de la fonction
-string2 list: nom des types de la fonction
-*)
-
-(*let (result : expType) = Cste(Int(0));;*)
-
 type methParam = string*string list;;
 
 
@@ -19,7 +12,14 @@ type classHash = {
   data : Ast.classDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
   meth : ((methParam, Ast.funDecl) Hashtbl.t);
-  cons : Ast.consDecl
+  cons : Ast.consDecl;
+
+  attrCpt : int ref;
+  attrIndex : ((string, int) Hashtbl.t);
+  attrIndexNotParent : ((string, int) Hashtbl.t);
+
+  methEti : ((methParam, string) Hashtbl.t);
+  index : int ref;
 };;
 
 
@@ -27,9 +27,17 @@ type objetHash = {
   data : Ast.objetDecl;
   attr : ((string, Ast.decl) Hashtbl.t);
   meth : ((methParam, Ast.funDecl) Hashtbl.t);
+
+  attrCpt : int ref;
+  attrIndex : ((string, int) Hashtbl.t);
+  methEti : ((methParam, string) Hashtbl.t);
+  index : int ref;
 };;
 
 (*Pour declarer variable "globale" et eviter de le redonner a chaque parametre*)
+(*tableau des classes dans l'ordre (qui se rempli pour la genCode) *)
+let classeOrdre = ref [];;
+
 type tableCO = 
   { 
     mutable classe : ((string, classHash) Hashtbl.t);
@@ -93,6 +101,9 @@ let ajouterMeth (a : funDecl) r =
 
 (* rempli la classe *)
 let remplirClasse (x: classDecl) (parent: classHash option)= 
+
+  classeOrdre := x::(!classeOrdre);
+
   if (Hashtbl.mem !table.objet x.nom || Hashtbl.mem !table.objet x.nom) 
   then failwith ("error a class or objet with name "^x.nom^" already exist") 
   else
@@ -116,7 +127,12 @@ let remplirClasse (x: classDecl) (parent: classHash option)=
     let c = !co in
     match c with
     |None ->failwith ("error there is no constructor in "^x.nom)
-    |Some sc -> Hashtbl.add !table.classe x.nom {data=x;attr=atable;meth=mtable;cons=sc};
+    |Some sc -> Hashtbl.add !table.classe x.nom 
+                {data=x;attr=atable;meth=mtable;cons=sc;
+                attrIndexNotParent = Hashtbl.create 50;
+                attrIndex= Hashtbl.create 50;methEti = Hashtbl.create 50;attrCpt = ref 0;
+                index = ref 0;
+                };
                 Hashtbl.find !table.classe x.nom
 
 ;;
@@ -151,7 +167,12 @@ let remplirObjet (x : Ast.objetDecl)=
     | Fun e -> ajouterMeth e mtable
     | Con e -> failwith "error constructor in object (??error should have happened in syntax)"
   ) x.cbl;
-  Hashtbl.add !table.objet x.nom {data=x;attr=atable;meth=mtable}
+  Hashtbl.add !table.objet x.nom 
+  {data=x;attr=atable;meth=mtable;
+  attrIndex= Hashtbl.create 50;methEti = Hashtbl.create 50;
+  attrCpt = ref 0;
+  index = ref 0;
+  }
 ;;
 
 (*on rempli !table.classe et !table.objet *)
@@ -232,10 +253,10 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
                     else if (not (Hashtbl.mem variables i)) then failwith ("la variable "^i^ " n'existe pas dans le bloc de : ("^lieu^"?)")
                     else (Hashtbl.find variables i).typ
   | ClassID (ci : string) -> (*si l'expression est un objet*)
-                    if (not (Hashtbl.mem !table.objet ci)) then failwith ("l'objet appele : "^ci^", n'existe pas")  
-                    else ci
-  | Cste (c : constInt) -> "Integer" (*si l'expression est un int*)
-  | CsteStr (c : constString) -> "String" (*si l'expression est un string*)
+					if (not (Hashtbl.mem !table.objet ci)) then failwith ("l'objet appele n'existe pas")  
+					else ci
+  | Cste (c : int) -> "Integer" (*si l'expression est un int*)
+  | CsteStr (c : string) -> "String" (*si l'expression est un string*)
   | Plus (e1,e2) -> (*si l'expression est un +*)
                     begin
                       if (((expr_to_typestring e1 variables lieu) <> "Integer") 
@@ -646,7 +667,6 @@ let checkConstructeur (classeAttr : Ast.classDecl) (constr : Ast.consDecl) =
   ) constr.para;
   (*
   Hashtbl.iter (fun s dec -> checkAssignDeclaration dec variables2 nom) attr;
-
   Hashtbl.iter (fun methpara fdec -> 
             let variablesBloc = Hashtbl.copy variables2 in
             remplirVariablesEtCallCheckBloc variablesBloc methpara fdec attr nom typ

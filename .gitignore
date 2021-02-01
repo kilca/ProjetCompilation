@@ -15,4 +15,6 @@
 !tpParse.mly
 !primitives.ml
 !test/*
+!interpreter/*
+!interpreter
 !test
