@@ -1,4 +1,4 @@
-class A (var i : Integer) : B is{
+class A (var i : Integer) extends B is{
   def A(var i: Integer) is {}
   def override truc() is {}
 }
