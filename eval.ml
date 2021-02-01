@@ -50,6 +50,7 @@ let ajouterClassesDefauts ld=
 (*fonction qui ajoute un attribut (utilise pour remplir la classe et objet *)
 let ajouterAttr (a : decl) r (enTete : bool) =
   if (a.lhs = "this") then failwith "an attribut cannot be named this";
+  if (a.lhs = "super") then failwith "an attribut cannot be named super";
   if (enTete) then (*si dans parenthese de classe genre : Couleur(ICI)*)
   begin
     if (a.isVar) then Hashtbl.add r a.lhs a
