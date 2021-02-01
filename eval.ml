@@ -341,6 +341,7 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
                 end
   | Inst (s,el) ->  (*si l'expression est un new C()*)
                 begin
+                  if (s = "Integer" || s = "String") then failwith ("on ne peut instantier les primitives string et integer");
                   if (not (Hashtbl.mem !table.classe s)) then failwith ("la classe instantiee n'existe pas : "^s)
                 else 
                   begin
@@ -371,16 +372,15 @@ let rec expr_to_typestring (e : expType) (variables : ((string, Ast.decl) Hashtb
 ;;
 
 
-let checkAssignDeclaration (dec : Ast.decl) variables nomCO =
+let rec checkAssignDeclaration (dec : Ast.decl) variables nomCO =
   match dec.rhs with
   | None -> ()
   | Some x -> 
             let nomTypeDroite = expr_to_typestring x variables nomCO in
-            if (nomTypeDroite <> dec.typ) then failwith ("erreur mauvais type d'init de variable : "^dec.lhs^" dans : "^nomCO)
-;;
+            if (not (doesHerite dec.typ nomTypeDroite)) then failwith ("erreur mauvais type d'init de variable : "^dec.lhs^" dans : "^nomCO)
 
 (*ajouter la liste de declaration dans la hashtable variables (utilise dans checkBloc)*)
-let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.decl) Hashtbl.t)) nomCO =
+and ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.decl) Hashtbl.t)) nomCO =
   List.iter (fun x -> 
   if (x.lhs = "this") then failwith "error, can't create a variable with name this"
   else if (x.lhs = "super") then failwith "error, can't create a variable with name super"
@@ -388,11 +388,10 @@ let ajouterDeclarations (declarations : decl list) (variables : ((string, Ast.de
       checkAssignDeclaration x variables nomCO;
       Hashtbl.add variables x.lhs x
   ) declarations
-;;
 
 (*Verifie si tb herite de ta *)
 (*ou si meme valeur, pareil que hasThisParent avec verif en plus*)
-let rec doesHerite ta tb=
+and doesHerite ta tb=
   if (ta = tb) then true
   else begin
     if ((Hashtbl.mem !table.classe ta) && (Hashtbl.mem !table.classe tb)) then
