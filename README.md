@@ -5,7 +5,9 @@
 make
 
 ./tp test/exObject.fvs
+
 cd interpreter/
+
 ../out.cfvs
 
 # Fait
