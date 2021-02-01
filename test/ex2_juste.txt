@@ -5,8 +5,7 @@ var index: Integer;
 def Point
 (var xc : Integer, var yc: Integer, var name: String) is 
 {
- this.index := CptPoint.incr();
- test := name;
+ this.index := yc;
 }
 
 def fonction1() : Integer := this.index
@@ -14,22 +13,9 @@ def fonction1() : Integer := this.index
 }
 
 
-class PointColore(x: Integer, y: Integer, n: String, var col: Color) extends Point
- is
-{
-def PointColore(x: Integer, y: Integer, n: String, var col: Color) : Point(x, y, "PC-" & n)
- is
-{
-	super.fonction1();
-}
-
-}
-
-
 {
 	true : Integer :=1;
 	ts : String :="1";
-	p1 : Point := new Point(1,"a", "p1");
 	is 
 	
 	ts.println();

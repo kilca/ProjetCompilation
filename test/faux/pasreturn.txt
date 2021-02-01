@@ -1,6 +1,0 @@
-class A() is {
-def A() is {}
-def test() : Integer is {}
-}
-{
-}

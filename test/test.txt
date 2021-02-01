@@ -1,0 +1,13 @@
+class A() is {
+  def A() is {}
+}
+class B() is {
+  def B() is {}
+}
+
+{
+  true: Integer := 1;
+  test: String := "test";
+  is
+  test.println();
+}
